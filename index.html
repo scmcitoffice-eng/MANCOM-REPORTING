@@ -104,6 +104,8 @@
       </div>
     </header>
 
+    <section class="view active" id="view-dashboard">
+
     <section class="hero">
       <div class="hero-copy">
         <h1 id="greeting">Good afternoon, Lito!</h1>
@@ -205,6 +207,210 @@
         </div>
       </div>
 
+    </section>
+
+    </section><!-- /view-dashboard -->
+
+    <!-- REPORTING -->
+    <section class="view" id="view-reporting">
+      <div class="view-head">
+        <div>
+          <h2>Reporting</h2>
+          <p class="view-sub">Track and submit department reports.</p>
+        </div>
+        <button class="primary-btn" data-action="Submit Report">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          Submit Report
+        </button>
+      </div>
+      <div class="filter-row" id="reportFilters"></div>
+      <div class="table-card">
+        <table class="data-table" id="reportsTable">
+          <thead>
+            <tr><th>Department</th><th>Report</th><th>Due Date</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="reportsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MEDICAL RECORDS -->
+    <section class="view" id="view-records">
+      <div class="view-head">
+        <div>
+          <h2>Medical Records</h2>
+          <p class="view-sub">Chart room status and record requests.</p>
+        </div>
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" width="15" height="15"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="recordsSearch" placeholder="Search patient or chart no.">
+        </div>
+      </div>
+      <div class="table-card">
+        <table class="data-table" id="recordsTable">
+          <thead>
+            <tr><th>Chart No.</th><th>Patient</th><th>Request</th><th>Requested</th><th>Status</th></tr>
+          </thead>
+          <tbody id="recordsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- GSS -->
+    <section class="view" id="view-gss">
+      <div class="view-head">
+        <div>
+          <h2>General Support Services</h2>
+          <p class="view-sub">Facility, maintenance, and compliance tasks.</p>
+        </div>
+      </div>
+      <div class="checklist-card" id="gssList"></div>
+    </section>
+
+    <!-- ACCOUNTING & FINANCE -->
+    <section class="view" id="view-finance">
+      <div class="view-head">
+        <div>
+          <h2>Accounting &amp; Finance</h2>
+          <p class="view-sub">Costing, pricing, and transaction overview.</p>
+        </div>
+      </div>
+      <div class="stat-row" id="financeStats"></div>
+      <div class="table-card">
+        <table class="data-table" id="financeTable">
+          <thead>
+            <tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr>
+          </thead>
+          <tbody id="financeTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section class="view" id="view-schedule">
+      <div class="view-head">
+        <div>
+          <h2>Schedule</h2>
+          <p class="view-sub">Full weekly schedule of activities.</p>
+        </div>
+      </div>
+      <div class="day-tabs" id="dayTabs"></div>
+      <div class="schedule-card">
+        <ol class="timeline" id="fullTimeline"></ol>
+      </div>
+    </section>
+
+    <!-- MEETINGS -->
+    <section class="view" id="view-meetings">
+      <div class="view-head">
+        <div>
+          <h2>Meetings</h2>
+          <p class="view-sub">Upcoming meetings and agenda items.</p>
+        </div>
+        <button class="primary-btn" data-action="New Meeting">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          New Meeting
+        </button>
+      </div>
+      <div class="meeting-grid" id="meetingGrid"></div>
+    </section>
+
+    <!-- DOCUMENTS -->
+    <section class="view" id="view-documents">
+      <div class="view-head">
+        <div>
+          <h2>Documents</h2>
+          <p class="view-sub">Shared files and department documents.</p>
+        </div>
+        <button class="primary-btn" data-action="Upload Document">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          Upload
+        </button>
+      </div>
+      <div class="table-card">
+        <table class="data-table" id="documentsTable">
+          <thead>
+            <tr><th>Name</th><th>Department</th><th>Uploaded</th><th>Size</th><th></th></tr>
+          </thead>
+          <tbody id="documentsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section class="view" id="view-users">
+      <div class="view-head">
+        <div>
+          <h2>Users</h2>
+          <p class="view-sub">Manage staff accounts and access.</p>
+        </div>
+        <button class="primary-btn" data-action="Add User">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          Add User
+        </button>
+      </div>
+      <div class="table-card">
+        <table class="data-table" id="usersTable">
+          <thead>
+            <tr><th>Name</th><th>Role</th><th>Department</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- REPORTS ARCHIVE -->
+    <section class="view" id="view-archive">
+      <div class="view-head">
+        <div>
+          <h2>Reports Archive</h2>
+          <p class="view-sub">Previously submitted and approved reports.</p>
+        </div>
+      </div>
+      <div class="filter-row" id="archiveFilters"></div>
+      <div class="table-card">
+        <table class="data-table" id="archiveTable">
+          <thead>
+            <tr><th>Department</th><th>Report</th><th>Submitted</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="archiveTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings">
+      <div class="view-head">
+        <div>
+          <h2>Settings</h2>
+          <p class="view-sub">Profile and notification preferences.</p>
+        </div>
+      </div>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3>Profile</h3>
+          <label class="field">
+            <span>Full name</span>
+            <input type="text" id="settingName" value="Lito Cabajar">
+          </label>
+          <label class="field">
+            <span>Role</span>
+            <input type="text" value="IT Officer" disabled>
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" value="lito.cabajar@stcamillus.ph">
+          </label>
+          <button class="primary-btn" id="saveProfileBtn">Save Changes</button>
+        </div>
+        <div class="settings-card">
+          <h3>Notifications</h3>
+          <div class="toggle-row"><span>Email alerts for report due dates</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="toggle-row"><span>Meeting reminders</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="toggle-row"><span>Document upload notifications</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="toggle-row"><span>Weekly summary email</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        </div>
+      </div>
     </section>
 
     <footer class="footer">
