@@ -186,16 +186,20 @@ function badge(status){
 }
 
 // ---------- RENDER REPORTING ----------
+let currentReportFilter = null;
 function renderReporting(filterDept){
+  currentReportFilter = filterDept || null;
   const body = document.getElementById("reportsTableBody");
-  const rows = reports.filter(r => !filterDept || r.dept === filterDept);
+  const rows = reports
+    .map((r, i) => ({ ...r, _index: i }))
+    .filter(r => !filterDept || r.dept === filterDept);
   body.innerHTML = rows.map(r => `
     <tr>
       <td><span class="dept-tag ${r.tagClass}">${r.dept}</span></td>
       <td class="cell-main">${r.name}</td>
       <td>${r.due}</td>
       <td>${badge(r.status)}</td>
-      <td class="cell-action"><button class="link-btn" data-report="${r.name}">${r.status === "submitted" ? "View" : "Submit"}</button></td>
+      <td class="cell-action"><button class="link-btn" data-index="${r._index}" data-report="${r.name}">${r.status === "submitted" ? "View" : "Submit"}</button></td>
     </tr>
   `).join("") || `<tr><td colspan="5" class="empty-row">No reports for this department.</td></tr>`;
 
@@ -631,7 +635,17 @@ function setupReportsTable(){
   document.getElementById("reportsTableBody").addEventListener("click", e => {
     const btn = e.target.closest(".link-btn");
     if(!btn) return;
-    showToast(btn.textContent === "Submit" ? `Submitted "${btn.dataset.report}"` : `Viewing "${btn.dataset.report}"`);
+    const idx = Number(btn.dataset.index);
+    const report = reports[idx];
+    if(!report) return;
+
+    if(btn.textContent.trim() === "Submit"){
+      report.status = "submitted";
+      renderReporting(currentReportFilter);
+      showToast(`Submitted "${report.name}"`);
+    } else {
+      showToast(`Viewing "${report.name}"`);
+    }
   });
   document.getElementById("archiveTableBody").addEventListener("click", e => {
     const btn = e.target.closest(".link-btn");
