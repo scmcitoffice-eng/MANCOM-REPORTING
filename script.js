@@ -439,6 +439,11 @@ const quickActionMap = {
   "Documents": "documents",
   "Reports Archive": "archive"
 };
+const modalActionMap = {
+  "New Meeting": openNewMeetingModal,
+  "Upload Document": openUploadDocumentModal,
+  "Add User": openAddUserModal
+};
 function setupQuickActions(){
   document.body.addEventListener("click", e => {
     const btn = e.target.closest("[data-action]");
@@ -447,8 +452,151 @@ function setupQuickActions(){
     if(quickActionMap[action]){
       switchView(quickActionMap[action]);
       showToast(`Opened ${action}`);
+    } else if(modalActionMap[action]){
+      modalActionMap[action]();
     } else {
       showToast(`${action} — coming soon`);
+    }
+  });
+}
+
+// ---------- MODAL SYSTEM ----------
+function openModal(html){
+  document.getElementById("modal").innerHTML = html;
+  document.getElementById("modalOverlay").classList.add("show");
+  const firstField = document.querySelector("#modal input, #modal textarea, #modal select");
+  if(firstField) firstField.focus();
+}
+function closeModal(){
+  document.getElementById("modalOverlay").classList.remove("show");
+}
+function formatFileSize(bytes){
+  if(bytes < 1024) return bytes + " B";
+  if(bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / 1024 / 1024).toFixed(1) + " MB";
+}
+function todayShort(){
+  return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function openNewMeetingModal(){
+  openModal(`
+    <div class="modal-head">
+      <h3>New Meeting</h3>
+      <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </div>
+    <form id="newMeetingForm" class="modal-form">
+      <label class="field"><span>Meeting title</span><input type="text" name="title" required placeholder="e.g. IT / HIMS Sync"></label>
+      <label class="field"><span>Time</span><input type="text" name="time" placeholder="e.g. Today · 4:30 PM"></label>
+      <label class="field"><span>Attendees</span><input type="text" name="attendees" placeholder="e.g. IT, GSS"></label>
+      <label class="field"><span>Agenda items</span><textarea name="agenda" rows="4" placeholder="One item per line"></textarea></label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
+        <button type="submit" class="primary-btn">Create Meeting</button>
+      </div>
+    </form>
+  `);
+}
+
+function openUploadDocumentModal(){
+  const deptOptions = [...new Set(documents.map(d => d.dept))];
+  openModal(`
+    <div class="modal-head">
+      <h3>Upload Document</h3>
+      <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </div>
+    <form id="uploadDocForm" class="modal-form">
+      <label class="field"><span>File</span><input type="file" name="file" id="docFileInput" required></label>
+      <label class="field">
+        <span>Department</span>
+        <select name="dept">${deptOptions.map(d => `<option value="${d}">${d}</option>`).join("")}</select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
+        <button type="submit" class="primary-btn">Upload</button>
+      </div>
+    </form>
+  `);
+}
+
+function openAddUserModal(){
+  openModal(`
+    <div class="modal-head">
+      <h3>Add User</h3>
+      <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </div>
+    <form id="addUserForm" class="modal-form">
+      <label class="field"><span>Full name</span><input type="text" name="name" required placeholder="e.g. Juan Dela Cruz"></label>
+      <label class="field"><span>Role</span><input type="text" name="role" placeholder="e.g. Records Clerk"></label>
+      <label class="field"><span>Department</span><input type="text" name="dept" placeholder="e.g. Medical Records"></label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
+        <button type="submit" class="primary-btn">Add User</button>
+      </div>
+    </form>
+  `);
+}
+
+function setupModal(){
+  const overlay = document.getElementById("modalOverlay");
+
+  overlay.addEventListener("click", e => {
+    if(e.target === overlay || e.target.closest("[data-modal-close]")) closeModal();
+  });
+
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape" && overlay.classList.contains("show")) closeModal();
+  });
+
+  overlay.addEventListener("submit", e => {
+    e.preventDefault();
+    const form = e.target;
+
+    if(form.id === "newMeetingForm"){
+      const fd = new FormData(form);
+      const title = fd.get("title").trim();
+      if(!title) return;
+      const agenda = fd.get("agenda").split("\n").map(s => s.trim()).filter(Boolean);
+      meetings.unshift({
+        title,
+        time: fd.get("time").trim() || "Time TBD",
+        attendees: fd.get("attendees").trim() || "TBD",
+        agenda: agenda.length ? agenda : ["No agenda items yet"]
+      });
+      renderMeetings();
+      closeModal();
+      showToast(`Meeting "${title}" created`);
+    }
+
+    if(form.id === "uploadDocForm"){
+      const fileInput = document.getElementById("docFileInput");
+      const file = fileInput.files[0];
+      if(!file){ showToast("Choose a file first"); return; }
+      const dept = new FormData(form).get("dept");
+      documents.unshift({
+        name: file.name,
+        dept,
+        uploaded: todayShort(),
+        size: formatFileSize(file.size)
+      });
+      renderDocuments();
+      closeModal();
+      showToast(`${file.name} uploaded`);
+    }
+
+    if(form.id === "addUserForm"){
+      const fd = new FormData(form);
+      const name = fd.get("name").trim();
+      if(!name) return;
+      users.unshift({
+        name,
+        role: fd.get("role").trim() || "Staff",
+        dept: fd.get("dept").trim() || "—",
+        status: "active"
+      });
+      renderUsers();
+      closeModal();
+      showToast(`${name} added`);
     }
   });
 }
@@ -584,4 +732,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupDayTabs();
   setupSettings();
   setupMisc();
+  setupModal();
 });
