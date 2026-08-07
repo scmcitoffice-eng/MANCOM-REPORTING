@@ -5,6 +5,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
 const reportsRef = ref(db, "reports");
+const meetingsRef = ref(db, "meetings");
 
 // ---------- DATA ----------
 const departments = [
@@ -187,6 +188,44 @@ function watchReports(){
   });
 }
 
+// One-time seed data — only written to Firestore if the "meetings" collection
+// is empty (e.g. brand new Firebase project). After that, Firestore is the
+// single source of truth and this array is unused.
+const seedMeetings = [
+  { title: "IMRS / OPD Updates", time: "Today · 3:41 PM", attendees: "HA, HD, MD, GSS, Marketing", agenda: ["Review admission numbers", "Discuss OPD signage rollout", "HNO status for TB patients"] },
+  { title: "GSS Facilities Sync", time: "Today · 3:53 PM", attendees: "GSS, Engineering", agenda: ["BFP requirements walkthrough", "Dialysis renovation timeline"] },
+  { title: "Accounting & Finance Costing Review", time: "Today · 3:57 PM", attendees: "Finance Team", agenda: ["Review updated cost sheets", "Approve pricing committee changes"] },
+  { title: "IT / HIMS Check", time: "Today · 4:43 PM", attendees: "IT, Mr. Angel", agenda: ["HIMS charging/discharging check in OPD"] }
+];
+
+// Live-synced from Firestore. Populated by watchMeetings() below; do not
+// push/splice this directly — write to Firestore and let the listener update it.
+let meetings = [];
+
+async function seedMeetingsIfEmpty(){
+  const snap = await get(meetingsRef);
+  if(snap.exists()) return;
+  const updates = {};
+  seedMeetings.forEach(m => {
+    const newKey = push(meetingsRef).key;
+    updates[newKey] = { ...m, createdAt: Date.now() };
+  });
+  await update(meetingsRef, updates);
+}
+
+function watchMeetings(){
+  onValue(meetingsRef, snap => {
+    const val = snap.val() || {};
+    meetings = Object.entries(val)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    renderMeetings();
+  }, err => {
+    console.error("Failed to load meetings from Realtime Database:", err);
+    showToast(`Couldn't load meetings: ${err.message || err.code || err}`);
+  });
+}
+
 const archiveReports = [
   { dept: "IMRS", tagClass: "tag-imrs", name: "Admissions Summary — May", submitted: "Jun 3, 2026", status: "approved" },
   { dept: "GSS", tagClass: "tag-gss", name: "Dialysis Renovation Progress", submitted: "Jun 10, 2026", status: "approved" },
@@ -223,13 +262,6 @@ const financeTransactions = [
   { date: "Jul 18, 2026", desc: "Vendor Payment — GSS Supplies", cat: "Expense", amount: "-₱54,200" },
   { date: "Jul 17, 2026", desc: "Bullseye POS — IMRS Settlement", cat: "Revenue", amount: "+₱96,750" },
   { date: "Jul 15, 2026", desc: "Equipment Costing Review", cat: "Expense", amount: "-₱128,900" }
-];
-
-const meetings = [
-  { title: "IMRS / OPD Updates", time: "Today · 3:41 PM", attendees: "HA, HD, MD, GSS, Marketing", agenda: ["Review admission numbers", "Discuss OPD signage rollout", "HNO status for TB patients"] },
-  { title: "GSS Facilities Sync", time: "Today · 3:53 PM", attendees: "GSS, Engineering", agenda: ["BFP requirements walkthrough", "Dialysis renovation timeline"] },
-  { title: "Accounting & Finance Costing Review", time: "Today · 3:57 PM", attendees: "Finance Team", agenda: ["Review updated cost sheets", "Approve pricing committee changes"] },
-  { title: "IT / HIMS Check", time: "Today · 4:43 PM", attendees: "IT, Mr. Angel", agenda: ["HIMS charging/discharging check in OPD"] }
 ];
 
 const documents = [
@@ -844,15 +876,21 @@ function setupModal(){
       const title = fd.get("title").trim();
       if(!title) return;
       const agenda = fd.get("agenda").split("\n").map(s => s.trim()).filter(Boolean);
-      meetings[idx] = {
+      const updates = {
         title,
         time: fd.get("time").trim() || "Time TBD",
         attendees: fd.get("attendees").trim() || "TBD",
         agenda: agenda.length ? agenda : ["No agenda items yet"]
       };
-      renderMeetings();
-      closeModal();
-      showToast(`Meeting "${title}" updated`);
+      update(child(meetingsRef, meeting.id), updates)
+        .then(() => {
+          closeModal();
+          showToast(`Meeting "${title}" updated`);
+        })
+        .catch(err => {
+          console.error("Failed to update meeting:", err);
+          showToast(`Couldn't save changes: ${err.message || err.code || err}`);
+        });
       return;
     }
 
@@ -891,15 +929,21 @@ function setupModal(){
       const title = fd.get("title").trim();
       if(!title) return;
       const agenda = fd.get("agenda").split("\n").map(s => s.trim()).filter(Boolean);
-      meetings.unshift({
+      set(push(meetingsRef), {
         title,
         time: fd.get("time").trim() || "Time TBD",
         attendees: fd.get("attendees").trim() || "TBD",
-        agenda: agenda.length ? agenda : ["No agenda items yet"]
-      });
-      renderMeetings();
-      closeModal();
-      showToast(`Meeting "${title}" created`);
+        agenda: agenda.length ? agenda : ["No agenda items yet"],
+        createdAt: Date.now()
+      })
+        .then(() => {
+          closeModal();
+          showToast(`Meeting "${title}" created`);
+        })
+        .catch(err => {
+          console.error("Failed to create meeting:", err);
+          showToast(`Couldn't create meeting: ${err.message || err.code || err}`);
+        });
     }
 
     if(form.id === "uploadDocForm"){
@@ -1044,9 +1088,12 @@ function setupMeetingsGrid(){
       const idx = Number(deleteBtn.dataset.meetingDelete);
       const meeting = meetings[idx];
       if(meeting && confirm(`Delete "${meeting.title}"? This can't be undone.`)){
-        meetings.splice(idx, 1);
-        renderMeetings();
-        showToast(`Deleted "${meeting.title}"`);
+        remove(child(meetingsRef, meeting.id))
+          .then(() => showToast(`Deleted "${meeting.title}"`))
+          .catch(err => {
+            console.error("Failed to delete meeting:", err);
+            showToast(`Couldn't delete meeting: ${err.message || err.code || err}`);
+          });
       }
     }
   });
@@ -1119,4 +1166,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     showToast(`Couldn't seed reports: ${err.message || err.code || err}`);
   }
   watchReports();
+
+  try {
+    await seedMeetingsIfEmpty();
+  } catch(err) {
+    console.error("Failed to seed meetings:", err);
+    showToast(`Couldn't seed meetings: ${err.message || err.code || err}`);
+  }
+  watchMeetings();
 });
