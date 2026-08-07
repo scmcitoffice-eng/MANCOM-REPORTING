@@ -284,7 +284,7 @@ function renderReporting(filterDept){
       <td>${r.due}</td>
       <td>${r.dateReported || "—"}</td>
       <td>${r.pointPerson || "—"}</td>
-      <td>${r.notes || "—"}</td>
+      <td class="cell-notes">${r.notes || "—"}</td>
       <td>${badge(r.status)}</td>
       <td class="cell-action"><button class="link-btn" data-index="${r._index}" data-report="${r.name}">${r.status === "submitted" ? "View" : "Submit"}</button></td>
     </tr>
