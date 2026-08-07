@@ -61,13 +61,13 @@ const schedule = [
 ];
 
 const reports = [
-  { dept: "IMRS", tagClass: "tag-imrs", name: "Admissions Summary — June", due: "Jul 24, 2026", status: "pending" },
-  { dept: "OPD", tagClass: "tag-opd", name: "HEPA Filter Inspection Log", due: "Jul 22, 2026", status: "overdue" },
-  { dept: "Medical Records", tagClass: "tag-mr", name: "Chart Room Rehabilitation Update", due: "Jul 25, 2026", status: "pending" },
-  { dept: "GSS", tagClass: "tag-gss", name: "BFP Compliance Checklist", due: "Jul 23, 2026", status: "overdue" },
-  { dept: "Accounting & Finance", tagClass: "tag-af", name: "Costing Review Summary", due: "Jul 28, 2026", status: "pending" },
-  { dept: "IMRS", tagClass: "tag-imrs", name: "Veridata Sync Report", due: "Jul 18, 2026", status: "submitted" },
-  { dept: "OPD", tagClass: "tag-opd", name: "TB Patient HNO Log", due: "Jul 19, 2026", status: "submitted" }
+  { dept: "IMRS", tagClass: "tag-imrs", name: "Admissions Summary — June", due: "Jul 24, 2026", status: "pending", dateReported: "", pointPerson: "Angel Fortuno", notes: "" },
+  { dept: "OPD", tagClass: "tag-opd", name: "HEPA Filter Inspection Log", due: "Jul 22, 2026", status: "overdue", dateReported: "", pointPerson: "Grace Manlangit", notes: "Awaiting filter delivery" },
+  { dept: "Medical Records", tagClass: "tag-mr", name: "Chart Room Rehabilitation Update", due: "Jul 25, 2026", status: "pending", dateReported: "", pointPerson: "Grace Manlangit", notes: "" },
+  { dept: "GSS", tagClass: "tag-gss", name: "BFP Compliance Checklist", due: "Jul 23, 2026", status: "overdue", dateReported: "", pointPerson: "Bong Sarmiento", notes: "Pending BFP inspection date" },
+  { dept: "Accounting & Finance", tagClass: "tag-af", name: "Costing Review Summary", due: "Jul 28, 2026", status: "pending", dateReported: "", pointPerson: "Rhea Villamor", notes: "" },
+  { dept: "IMRS", tagClass: "tag-imrs", name: "Veridata Sync Report", due: "Jul 18, 2026", status: "submitted", dateReported: "Jul 18, 2026", pointPerson: "Angel Fortuno", notes: "Synced successfully" },
+  { dept: "OPD", tagClass: "tag-opd", name: "TB Patient HNO Log", due: "Jul 19, 2026", status: "submitted", dateReported: "Jul 19, 2026", pointPerson: "Grace Manlangit", notes: "" }
 ];
 
 const archiveReports = [
@@ -142,10 +142,16 @@ function renderDepartments(){
       </div>
       <h3>${d.title}</h3>
       <p>${d.desc}</p>
-      <a href="#" class="dept-link" data-dept="${d.title}">
-        Go to Reports
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </a>
+      <div class="dept-actions">
+        <a href="#" class="dept-link" data-dept="${d.title}">
+          Go to Reports
+          <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <button type="button" class="dept-add-btn" data-add-report="${d.title}">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Add Report
+        </button>
+      </div>
     </article>
   `).join("");
 }
@@ -198,10 +204,13 @@ function renderReporting(filterDept){
       <td><span class="dept-tag ${r.tagClass}">${r.dept}</span></td>
       <td class="cell-main">${r.name}</td>
       <td>${r.due}</td>
+      <td>${r.dateReported || "—"}</td>
+      <td>${r.pointPerson || "—"}</td>
+      <td>${r.notes || "—"}</td>
       <td>${badge(r.status)}</td>
       <td class="cell-action"><button class="link-btn" data-index="${r._index}" data-report="${r.name}">${r.status === "submitted" ? "View" : "Submit"}</button></td>
     </tr>
-  `).join("") || `<tr><td colspan="5" class="empty-row">No reports for this department.</td></tr>`;
+  `).join("") || `<tr><td colspan="8" class="empty-row">No reports for this department.</td></tr>`;
 
   const filters = document.getElementById("reportFilters");
   const depts = ["All", ...new Set(reports.map(r => r.dept))];
@@ -437,13 +446,13 @@ function setupNav(){
 
 // ---------- QUICK ACTIONS ----------
 const quickActionMap = {
-  "Submit Report": "reporting",
   "View Schedules": "schedule",
   "Meeting Agenda": "meetings",
   "Documents": "documents",
   "Reports Archive": "archive"
 };
 const modalActionMap = {
+  "Submit Report": () => openAddReportModal(),
   "New Meeting": openNewMeetingModal,
   "Upload Document": openUploadDocumentModal,
   "Add User": openAddUserModal
@@ -541,6 +550,36 @@ function openAddUserModal(){
   `);
 }
 
+function openAddReportModal(presetDept){
+  const deptTagMap = Object.fromEntries(departments.map(d => [d.title, d.tagClass]));
+  const deptOptions = departments.map(d => d.title);
+  openModal(`
+    <div class="modal-head">
+      <h3>Add Report</h3>
+      <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </div>
+    <form id="addReportForm" class="modal-form">
+      <label class="field">
+        <span>Department</span>
+        <select name="dept" required>
+          ${deptOptions.map(d => `<option value="${d}" ${d === presetDept ? "selected" : ""}>${d}</option>`).join("")}
+        </select>
+      </label>
+      <label class="field"><span>Report name</span><input type="text" name="name" required placeholder="e.g. Admissions Summary — July"></label>
+      <label class="field"><span>Due date</span><input type="text" name="due" required placeholder="e.g. Jul 30, 2026"></label>
+      <label class="field"><span>Date reported</span><input type="text" name="dateReported" placeholder="e.g. Jul 25, 2026 (leave blank if not yet reported)"></label>
+      <label class="field"><span>Point person</span><input type="text" name="pointPerson" placeholder="e.g. Juan Dela Cruz"></label>
+      <label class="field"><span>Notes</span><textarea name="notes" rows="3" placeholder="Optional notes"></textarea></label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
+        <button type="submit" class="primary-btn">Add Report</button>
+      </div>
+    </form>
+  `);
+  // stash the dept->tagClass map on the form for use at submit time
+  document.getElementById("addReportForm").dataset.deptTagMap = JSON.stringify(deptTagMap);
+}
+
 function openViewReportModal(idx){
   const report = reports[idx];
   if(!report) return;
@@ -554,6 +593,9 @@ function openViewReportModal(idx){
         <div><span class="dept-tag ${report.tagClass}">${report.dept}</span></div>
       </label>
       <label class="field"><span>Due date</span><div>${report.due}</div></label>
+      <label class="field"><span>Date reported</span><div>${report.dateReported || "—"}</div></label>
+      <label class="field"><span>Point person</span><div>${report.pointPerson || "—"}</div></label>
+      <label class="field"><span>Notes</span><div>${report.notes || "—"}</div></label>
       <label class="field"><span>Status</span><div>${badge(report.status)}</div></label>
       <div class="modal-actions">
         <button type="button" class="ghost-btn" data-report-delete="${idx}">Delete</button>
@@ -575,6 +617,9 @@ function openEditReportModal(idx){
     <form id="editReportForm" class="modal-form" data-report-index="${idx}">
       <label class="field"><span>Report name</span><input type="text" name="name" required value="${report.name}"></label>
       <label class="field"><span>Due date</span><input type="text" name="due" required value="${report.due}"></label>
+      <label class="field"><span>Date reported</span><input type="text" name="dateReported" value="${report.dateReported || ""}" placeholder="e.g. Jul 25, 2026"></label>
+      <label class="field"><span>Point person</span><input type="text" name="pointPerson" value="${report.pointPerson || ""}"></label>
+      <label class="field"><span>Notes</span><textarea name="notes" rows="3">${report.notes || ""}</textarea></label>
       <div class="modal-actions">
         <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
         <button type="submit" class="primary-btn">Save Changes</button>
@@ -627,9 +672,36 @@ function setupModal(){
       if(!name || !due) return;
       report.name = name;
       report.due = due;
+      report.dateReported = fd.get("dateReported").trim();
+      report.pointPerson = fd.get("pointPerson").trim();
+      report.notes = fd.get("notes").trim();
       renderReporting(currentReportFilter);
       closeModal();
       showToast(`Updated "${report.name}"`);
+      return;
+    }
+
+    if(form.id === "addReportForm"){
+      const fd = new FormData(form);
+      const dept = fd.get("dept");
+      const name = fd.get("name").trim();
+      const due = fd.get("due").trim();
+      if(!dept || !name || !due) return;
+      const dateReported = fd.get("dateReported").trim();
+      const deptTagMap = JSON.parse(form.dataset.deptTagMap || "{}");
+      reports.unshift({
+        dept,
+        tagClass: deptTagMap[dept] || "tag-imrs",
+        name,
+        due,
+        status: dateReported ? "submitted" : "pending",
+        dateReported,
+        pointPerson: fd.get("pointPerson").trim(),
+        notes: fd.get("notes").trim()
+      });
+      renderReporting(currentReportFilter);
+      closeModal();
+      showToast(`Added "${name}" for ${dept}`);
       return;
     }
 
@@ -685,6 +757,11 @@ function setupModal(){
 // ---------- DEPT LINKS ----------
 function setupDeptLinks(){
   document.getElementById("deptGrid").addEventListener("click", e => {
+    const addBtn = e.target.closest("[data-add-report]");
+    if(addBtn){
+      openAddReportModal(addBtn.dataset.addReport);
+      return;
+    }
     const link = e.target.closest(".dept-link");
     if(!link) return;
     e.preventDefault();
@@ -718,6 +795,7 @@ function setupReportsTable(){
 
     if(btn.textContent.trim() === "Submit"){
       report.status = "submitted";
+      report.dateReported = todayShort();
       renderReporting(currentReportFilter);
       showToast(`Submitted "${report.name}"`);
     } else {
