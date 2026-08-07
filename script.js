@@ -414,7 +414,7 @@ function renderFinance(){
 // ---------- RENDER MEETINGS ----------
 function renderMeetings(){
   const grid = document.getElementById("meetingGrid");
-  grid.innerHTML = meetings.map(m => `
+  grid.innerHTML = meetings.map((m, i) => `
     <article class="meeting-card">
       <div class="meeting-top">
         <h3>${m.title}</h3>
@@ -424,6 +424,10 @@ function renderMeetings(){
       <ul class="meeting-agenda">
         ${m.agenda.map(a => `<li>${a}</li>`).join("")}
       </ul>
+      <div class="meeting-actions">
+        <button type="button" class="link-btn" data-meeting-edit="${i}">Edit</button>
+        <button type="button" class="link-btn link-btn-danger" data-meeting-delete="${i}">Delete</button>
+      </div>
     </article>
   `).join("");
 }
@@ -628,6 +632,27 @@ function openNewMeetingModal(){
   `);
 }
 
+function openEditMeetingModal(idx){
+  const meeting = meetings[idx];
+  if(!meeting) return;
+  openModal(`
+    <div class="modal-head">
+      <h3>Edit Meeting</h3>
+      <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </div>
+    <form id="editMeetingForm" class="modal-form" data-meeting-index="${idx}">
+      <label class="field"><span>Meeting title</span><input type="text" name="title" required value="${meeting.title}"></label>
+      <label class="field"><span>Time</span><input type="text" name="time" value="${meeting.time}" placeholder="e.g. Today · 4:30 PM"></label>
+      <label class="field"><span>Attendees</span><input type="text" name="attendees" value="${meeting.attendees}"></label>
+      <label class="field"><span>Agenda items</span><textarea name="agenda" rows="4" placeholder="One item per line">${meeting.agenda.join("\n")}</textarea></label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
+        <button type="submit" class="primary-btn">Save Changes</button>
+      </div>
+    </form>
+  `);
+}
+
 function openUploadDocumentModal(){
   const deptOptions = departments.map(d => d.title);
   openModal(`
@@ -811,6 +836,26 @@ function setupModal(){
       return;
     }
 
+    if(form.id === "editMeetingForm"){
+      const idx = Number(form.dataset.meetingIndex);
+      const meeting = meetings[idx];
+      if(!meeting) return;
+      const fd = new FormData(form);
+      const title = fd.get("title").trim();
+      if(!title) return;
+      const agenda = fd.get("agenda").split("\n").map(s => s.trim()).filter(Boolean);
+      meetings[idx] = {
+        title,
+        time: fd.get("time").trim() || "Time TBD",
+        attendees: fd.get("attendees").trim() || "TBD",
+        agenda: agenda.length ? agenda : ["No agenda items yet"]
+      };
+      renderMeetings();
+      closeModal();
+      showToast(`Meeting "${title}" updated`);
+      return;
+    }
+
     if(form.id === "addReportForm"){
       const fd = new FormData(form);
       const dept = fd.get("dept");
@@ -986,6 +1031,27 @@ function setupUsersTable(){
   });
 }
 
+// ---------- MEETINGS EDIT/DELETE ----------
+function setupMeetingsGrid(){
+  document.getElementById("meetingGrid").addEventListener("click", e => {
+    const editBtn = e.target.closest("[data-meeting-edit]");
+    if(editBtn){
+      openEditMeetingModal(Number(editBtn.dataset.meetingEdit));
+      return;
+    }
+    const deleteBtn = e.target.closest("[data-meeting-delete]");
+    if(deleteBtn){
+      const idx = Number(deleteBtn.dataset.meetingDelete);
+      const meeting = meetings[idx];
+      if(meeting && confirm(`Delete "${meeting.title}"? This can't be undone.`)){
+        meetings.splice(idx, 1);
+        renderMeetings();
+        showToast(`Deleted "${meeting.title}"`);
+      }
+    }
+  });
+}
+
 // ---------- FULL SCHEDULE DAY TABS ----------
 function setupDayTabs(){
   document.getElementById("dayTabs").addEventListener("click", e => {
@@ -1039,6 +1105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupRecordsSearch();
   setupGssList();
   setupUsersTable();
+  setupMeetingsGrid();
   setupDayTabs();
   setupSettings();
   setupMisc();
