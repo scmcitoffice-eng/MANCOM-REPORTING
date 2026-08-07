@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>St. Camillus Medical Center — Reporting Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="#ffffff" stroke="#1c6b45" stroke-width="2"/>
+          <path d="M24 10 L24 38 M13 20 L35 20" stroke="#1c6b45" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">ST. CAMILLUS<br>MEDICAL CENTER</span>
+        <span class="brand-tag">Compassion · Excellence · Service</span>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <a href="#" class="nav-item active" data-view="dashboard">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item" data-view="reporting">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        Reporting
+      </a>
+      <a href="#" class="nav-item" data-view="records">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 7l3-3h6l3 3h6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Medical Records
+      </a>
+      <a href="#" class="nav-item" data-view="gss">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><circle cx="18" cy="9" r="2.3"/><path d="M16.5 13.2c2.6.4 4.5 2.3 4.5 4.8"/></svg>
+        GSS
+      </a>
+      <a href="#" class="nav-item" data-view="finance">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9h18M8 13h3M8 17h8"/></svg>
+        Accounting &amp; Finance
+      </a>
+      <a href="#" class="nav-item" data-view="schedule">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/><path d="M8.5 14l2 2 4-4"/></svg>
+        Schedule
+      </a>
+      <a href="#" class="nav-item" data-view="meetings">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2.5 20c0-3.3 2.7-5.7 5.5-5.7s5.5 2.4 5.5 5.7M14.8 14.6c2.6.2 4.7 2.5 4.7 5.4"/></svg>
+        Meetings
+      </a>
+      <a href="#" class="nav-item" data-view="documents">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Documents
+      </a>
+      <a href="#" class="nav-item" data-view="users">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7"/></svg>
+        Users
+      </a>
+      <a href="#" class="nav-item" data-view="archive">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></svg>
+        Reports Archive
+      </a>
+      <a href="#" class="nav-item" data-view="settings">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.9 7.9 0 0 0 0-3l2-1.5-2-3.4-2.4.8a8 8 0 0 0-2.6-1.5L14 2h-4l-.4 2.4a8 8 0 0 0-2.6 1.5l-2.4-.8-2 3.4L4.6 10a8 8 0 0 0 0 3l-2 1.6 2 3.4 2.4-.8a8 8 0 0 0 2.6 1.5L10 22h4l.4-2.4a8 8 0 0 0 2.6-1.5l2.4.8 2-3.4z"/></svg>
+        Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="avatar">LC</div>
+      <div class="who">
+        <span class="who-name">Lito Cabajar</span>
+        <span class="who-role">IT Officer</span>
+        <button class="logout" id="logoutBtn">
+          <svg viewBox="0 0 24 24" width="13" height="13"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          Log out
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <header class="topbar">
+      <div class="search-spacer"></div>
+      <button class="bell" id="bellBtn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M18 8a6 6 0 0 0-12 0c0 5.5-2 7-2 7h16s-2-1.5-2-7"/><path d="M10.5 21a1.7 1.7 0 0 0 3 0"/></svg>
+        <span class="dot"></span>
+      </button>
+      <div class="user-chip">
+        <div class="user-avatar">LC</div>
+        <div class="user-meta">
+          <span class="user-name">Lito Cabajar</span>
+          <span class="user-role">IT Officer</span>
+        </div>
+        <svg class="chev" viewBox="0 0 24 24" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <h1 id="greeting">Good afternoon, Lito!</h1>
+        <p>Welcome to the St. Camillus Medical Center Reporting Dashboard. Here's what's happening today.</p>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-icon icon-people">
+            <svg viewBox="0 0 24 24" width="26" height="26"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 8.3a2.6 2.6 0 1 1 0 5.2"/><path d="M15 20c0-2.5 1.2-4.5 3-5.6"/><path d="M20.5 20c0-1.7-.6-3.2-1.5-4.3"/></svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Total Admissions</span>
+            <span class="stat-value" data-count="69">0</span>
+            <span class="stat-sub">June 2026</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-clock">
+            <svg viewBox="0 0 24 24" width="26" height="26"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 3v3M16 3v3M3 9.5h18"/><circle cx="17" cy="16" r="3.6"/><path d="M17 14.5V16l1 .8"/></svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Today's Admissions</span>
+            <span class="stat-value" data-count="49">0</span>
+            <span class="stat-sub">as of July 21, 2026</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-doc">
+            <svg viewBox="0 0 24 24" width="26" height="26"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 16.5h7"/></svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Reports Due</span>
+            <span class="stat-value" data-count="12">0</span>
+            <span class="stat-sub">This Week</span>
+          </div>
+        </div>
+
+        <div class="stat-card highlight">
+          <div class="stat-icon icon-cal">
+            <svg viewBox="0 0 24 24" width="26" height="26"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 3v3M16 3v3M3 9.5h18"/><path d="M8.5 14l2 2 4.5-4.5"/></svg>
+          </div>
+          <div class="stat-body">
+            <span class="stat-label">Upcoming Meetings</span>
+            <span class="stat-value" data-count="2">0</span>
+            <span class="stat-sub">This Week</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="quick-actions">
+      <h2>Quick Actions</h2>
+      <div class="qa-row">
+        <button class="qa-btn" data-action="Submit Report">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><path d="M12 12v6M9 15h6"/></svg>
+          Submit Report
+        </button>
+        <button class="qa-btn" data-action="View Schedules">
+          <svg viewBox="0 0 24 24" width="20" height="20"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 3v3M16 3v3M3 9.5h18"/></svg>
+          View Schedules
+        </button>
+        <button class="qa-btn" data-action="Meeting Agenda">
+          <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="8" cy="9" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2.5 20c0-3.3 2.7-5.7 5.5-5.7s5.5 2.4 5.5 5.7M14.8 14.6c2.6.2 4.7 2.5 4.7 5.4"/></svg>
+          Meeting Agenda
+        </button>
+        <button class="qa-btn" data-action="Documents">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          Documents
+        </button>
+        <button class="qa-btn" data-action="Reports Archive">
+          <svg viewBox="0 0 24 24" width="20" height="20"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></svg>
+          Reports Archive
+        </button>
+      </div>
+    </section>
+
+    <section class="content-grid">
+
+      <div class="reports-col">
+        <h2>Department Reports</h2>
+        <div class="dept-grid" id="deptGrid">
+          <!-- injected by script.js -->
+        </div>
+      </div>
+
+      <div class="schedule-col">
+        <h2>Today's Schedule</h2>
+        <div class="schedule-card">
+          <ol class="timeline" id="timeline">
+            <!-- injected by script.js -->
+          </ol>
+          <button class="view-full-btn" id="viewFullSchedule">
+            View Full Schedule
+            <svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <footer class="footer">
+      <span>© 2026 St. Camillus Medical Center. All rights reserved.</span>
+      <span>Powered by IT Department</span>
+    </footer>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
