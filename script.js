@@ -1,6 +1,60 @@
 // ---------- DATA ----------
 const departments = [
   {
+    tag: "HR", tagClass: "tag-hr", iconClass: "hr",
+    title: "HR",
+    desc: "Recruitment, employee relations, benefits, training & development",
+    icon: `<circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7"/>`
+  },
+  {
+    tag: "PROCUREMENT", tagClass: "tag-proc", iconClass: "proc",
+    title: "Procurement",
+    desc: "Purchase orders, supplier management, inventory restocking",
+    icon: `<path d="M4 4h2l1.6 10.2A2 2 0 0 0 9.6 16h7.8a2 2 0 0 0 2-1.7L21 7H6"/><circle cx="9.5" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/>`
+  },
+  {
+    tag: "MARKETING", tagClass: "tag-mktg", iconClass: "mktg",
+    title: "Marketing",
+    desc: "Campaigns, community outreach, brand & social media",
+    icon: `<path d="M3 10v4h4l5 4V6l-5 4z"/><path d="M16.5 9a4 4 0 0 1 0 6"/><path d="M19 6.5a7.5 7.5 0 0 1 0 11"/>`
+  },
+  {
+    tag: "NURSING", tagClass: "tag-nursing", iconClass: "nursing",
+    title: "Nursing (Ward, ICU, OR, ER, Dialysis)",
+    desc: "Staffing, patient care coordination, unit compliance",
+    icon: `<path d="M12 21s-7-4.4-9.3-8.8C1.2 8.8 3 5.5 6.3 5.2c1.9-.2 3.4.9 4.2 2.1.8-1.2 2.3-2.3 4.2-2.1 3.3.3 5.1 3.6 3.6 7C20.7 16.5 12 21 12 21z"/><path d="M9 12h2.2l1-2 1.6 4 1-2H17"/>`
+  },
+  {
+    tag: "LABORATORY", tagClass: "tag-lab", iconClass: "lab",
+    title: "Laboratory",
+    desc: "Specimen processing, test results, equipment calibration",
+    icon: `<path d="M9 2h6M10 2v6.5L4.8 18a2 2 0 0 0 1.7 3h11a2 2 0 0 0 1.7-3L14 8.5V2"/><path d="M7.5 15h9"/>`
+  },
+  {
+    tag: "SOCIAL SERVICE", tagClass: "tag-ss", iconClass: "ss",
+    title: "Social Service",
+    desc: "Patient assistance, charity cases, discharge coordination",
+    icon: `<path d="M12 20s-7-4.2-9-8.4C1.3 8 3.4 5 6.8 5c2 0 3.6 1.2 5.2 3 1.6-1.8 3.2-3 5.2-3 3.4 0 5.5 3 3.8 6.6C19 15.8 12 20 12 20z"/>`
+  },
+  {
+    tag: "PHARMACY", tagClass: "tag-pharm", iconClass: "pharm",
+    title: "Pharmacy",
+    desc: "Medication dispensing, inventory, drug safety compliance",
+    icon: `<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/>`
+  },
+  {
+    tag: "QA", tagClass: "tag-qa", iconClass: "qa",
+    title: "QA",
+    desc: "Quality audits, accreditation standards, incident review",
+    icon: `<path d="M12 3l7 3v6c0 4.6-3 8.4-7 9-4-.6-7-4.4-7-9V6z"/><path d="M9 12l2 2 4-4"/>`
+  },
+  {
+    tag: "IT", tagClass: "tag-it", iconClass: "it",
+    title: "IT",
+    desc: "HIMS support, network infrastructure, systems maintenance",
+    icon: `<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>`
+  },
+  {
     tag: "IMRS", tagClass: "tag-imrs", iconClass: "imrs",
     title: "IMRS",
     desc: "Admissions, ambulance, storage, Veridata, Hospital Notification",
@@ -512,7 +566,7 @@ function openNewMeetingModal(){
 }
 
 function openUploadDocumentModal(){
-  const deptOptions = [...new Set(documents.map(d => d.dept))];
+  const deptOptions = departments.map(d => d.title);
   openModal(`
     <div class="modal-head">
       <h3>Upload Document</h3>

@@ -21,6 +21,15 @@
   --tag-mr-bg:#dcefe0; --tag-mr-fg:#2c7a4b;
   --tag-gss-bg:#dbe9fb; --tag-gss-fg:#2860b0;
   --tag-af-bg:#e7dff8; --tag-af-fg:#6c3fb5;
+  --tag-hr-bg:#fde2e2; --tag-hr-fg:#c23b3b;
+  --tag-proc-bg:#d9f5f2; --tag-proc-fg:#128077;
+  --tag-mktg-bg:#fde2f0; --tag-mktg-fg:#c23b8f;
+  --tag-nursing-bg:#e3e2fd; --tag-nursing-fg:#4b3bc2;
+  --tag-lab-bg:#d2f3fd; --tag-lab-fg:#0f7ea6;
+  --tag-ss-bg:#f5e6d2; --tag-ss-fg:#8a5a1f;
+  --tag-pharm-bg:#fde2ea; --tag-pharm-fg:#b5215f;
+  --tag-qa-bg:#e2e8ee; --tag-qa-fg:#3f5468;
+  --tag-it-bg:#eef5d2; --tag-it-fg:#5a7a1f;
 
   --badge-ongoing-bg:#dff2e4; --badge-ongoing-fg:#1f8a4d;
   --badge-started-bg:#dfe9fb; --badge-started-fg:#2860c9;
@@ -313,6 +322,15 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
 .tag-mr{background:var(--tag-mr-bg);color:var(--tag-mr-fg);}
 .tag-gss{background:var(--tag-gss-bg);color:var(--tag-gss-fg);}
 .tag-af{background:var(--tag-af-bg);color:var(--tag-af-fg);}
+.tag-hr{background:var(--tag-hr-bg);color:var(--tag-hr-fg);}
+.tag-proc{background:var(--tag-proc-bg);color:var(--tag-proc-fg);}
+.tag-mktg{background:var(--tag-mktg-bg);color:var(--tag-mktg-fg);}
+.tag-nursing{background:var(--tag-nursing-bg);color:var(--tag-nursing-fg);}
+.tag-lab{background:var(--tag-lab-bg);color:var(--tag-lab-fg);}
+.tag-ss{background:var(--tag-ss-bg);color:var(--tag-ss-fg);}
+.tag-pharm{background:var(--tag-pharm-bg);color:var(--tag-pharm-fg);}
+.tag-qa{background:var(--tag-qa-bg);color:var(--tag-qa-fg);}
+.tag-it{background:var(--tag-it-bg);color:var(--tag-it-fg);}
 
 .dept-icon{
   width:44px;height:44px;border-radius:50%;
@@ -324,6 +342,15 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
 .dept-icon.mr{background:#dcefe0;color:#2c7a4b;}
 .dept-icon.gss{background:#dbe9fb;color:#2860b0;}
 .dept-icon.af{background:#e7dff8;color:#6c3fb5;}
+.dept-icon.hr{background:#fde2e2;color:#c23b3b;}
+.dept-icon.proc{background:#d9f5f2;color:#128077;}
+.dept-icon.mktg{background:#fde2f0;color:#c23b8f;}
+.dept-icon.nursing{background:#e3e2fd;color:#4b3bc2;}
+.dept-icon.lab{background:#d2f3fd;color:#0f7ea6;}
+.dept-icon.ss{background:#f5e6d2;color:#8a5a1f;}
+.dept-icon.pharm{background:#fde2ea;color:#b5215f;}
+.dept-icon.qa{background:#e2e8ee;color:#3f5468;}
+.dept-icon.it{background:#eef5d2;color:#5a7a1f;}
 
 .dept-card h3{font-size:14.5px;font-weight:700;color:var(--ink-900);}
 .dept-card p{font-size:12.5px;color:var(--ink-500);line-height:1.5;margin-bottom:2px;}
