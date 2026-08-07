@@ -19,9 +19,33 @@ const departments = [
     icon: `<path d="M3 10v4h4l5 4V6l-5 4z"/><path d="M16.5 9a4 4 0 0 1 0 6"/><path d="M19 6.5a7.5 7.5 0 0 1 0 11"/>`
   },
   {
-    tag: "NURSING", tagClass: "tag-nursing", iconClass: "nursing",
-    title: "Nursing (Ward, ICU, OR, ER, Dialysis)",
-    desc: "Staffing, patient care coordination, unit compliance",
+    tag: "NURSING – WARD", tagClass: "tag-nursing", iconClass: "nursing",
+    title: "Nursing – Ward",
+    desc: "Inpatient ward staffing, census, and unit compliance",
+    icon: `<path d="M12 21s-7-4.4-9.3-8.8C1.2 8.8 3 5.5 6.3 5.2c1.9-.2 3.4.9 4.2 2.1.8-1.2 2.3-2.3 4.2-2.1 3.3.3 5.1 3.6 3.6 7C20.7 16.5 12 21 12 21z"/><path d="M9 12h2.2l1-2 1.6 4 1-2H17"/>`
+  },
+  {
+    tag: "NURSING – ICU", tagClass: "tag-nursing", iconClass: "nursing",
+    title: "Nursing – ICU",
+    desc: "Critical care staffing, monitoring logs, and unit compliance",
+    icon: `<path d="M12 21s-7-4.4-9.3-8.8C1.2 8.8 3 5.5 6.3 5.2c1.9-.2 3.4.9 4.2 2.1.8-1.2 2.3-2.3 4.2-2.1 3.3.3 5.1 3.6 3.6 7C20.7 16.5 12 21 12 21z"/><path d="M9 12h2.2l1-2 1.6 4 1-2H17"/>`
+  },
+  {
+    tag: "NURSING – OR", tagClass: "tag-nursing", iconClass: "nursing",
+    title: "Nursing – OR",
+    desc: "Operating room scheduling, staffing, and case logs",
+    icon: `<path d="M12 21s-7-4.4-9.3-8.8C1.2 8.8 3 5.5 6.3 5.2c1.9-.2 3.4.9 4.2 2.1.8-1.2 2.3-2.3 4.2-2.1 3.3.3 5.1 3.6 3.6 7C20.7 16.5 12 21 12 21z"/><path d="M9 12h2.2l1-2 1.6 4 1-2H17"/>`
+  },
+  {
+    tag: "NURSING – ER", tagClass: "tag-nursing", iconClass: "nursing",
+    title: "Nursing – ER",
+    desc: "Emergency room staffing, triage logs, and unit compliance",
+    icon: `<path d="M12 21s-7-4.4-9.3-8.8C1.2 8.8 3 5.5 6.3 5.2c1.9-.2 3.4.9 4.2 2.1.8-1.2 2.3-2.3 4.2-2.1 3.3.3 5.1 3.6 3.6 7C20.7 16.5 12 21 12 21z"/><path d="M9 12h2.2l1-2 1.6 4 1-2H17"/>`
+  },
+  {
+    tag: "NURSING – DIALYSIS", tagClass: "tag-nursing", iconClass: "nursing",
+    title: "Nursing – Dialysis",
+    desc: "Dialysis unit staffing, machine logs, and unit compliance",
     icon: `<path d="M12 21s-7-4.4-9.3-8.8C1.2 8.8 3 5.5 6.3 5.2c1.9-.2 3.4.9 4.2 2.1.8-1.2 2.3-2.3 4.2-2.1 3.3.3 5.1 3.6 3.6 7C20.7 16.5 12 21 12 21z"/><path d="M9 12h2.2l1-2 1.6 4 1-2H17"/>`
   },
   {
