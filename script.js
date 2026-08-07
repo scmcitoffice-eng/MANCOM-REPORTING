@@ -541,10 +541,71 @@ function openAddUserModal(){
   `);
 }
 
+function openViewReportModal(idx){
+  const report = reports[idx];
+  if(!report) return;
+  openModal(`
+    <div class="modal-head">
+      <h3>${report.name}</h3>
+      <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-form">
+      <label class="field"><span>Department</span>
+        <div><span class="dept-tag ${report.tagClass}">${report.dept}</span></div>
+      </label>
+      <label class="field"><span>Due date</span><div>${report.due}</div></label>
+      <label class="field"><span>Status</span><div>${badge(report.status)}</div></label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-report-delete="${idx}">Delete</button>
+        <button type="button" class="ghost-btn" data-report-edit="${idx}">Edit</button>
+        <button type="button" class="primary-btn" data-modal-close>Close</button>
+      </div>
+    </div>
+  `);
+}
+
+function openEditReportModal(idx){
+  const report = reports[idx];
+  if(!report) return;
+  openModal(`
+    <div class="modal-head">
+      <h3>Edit Report</h3>
+      <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </div>
+    <form id="editReportForm" class="modal-form" data-report-index="${idx}">
+      <label class="field"><span>Report name</span><input type="text" name="name" required value="${report.name}"></label>
+      <label class="field"><span>Due date</span><input type="text" name="due" required value="${report.due}"></label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
+        <button type="submit" class="primary-btn">Save Changes</button>
+      </div>
+    </form>
+  `);
+}
+
 function setupModal(){
   const overlay = document.getElementById("modalOverlay");
 
   overlay.addEventListener("click", e => {
+    const deleteBtn = e.target.closest("[data-report-delete]");
+    if(deleteBtn){
+      const idx = Number(deleteBtn.dataset.reportDelete);
+      const report = reports[idx];
+      if(report && confirm(`Delete "${report.name}"? This can't be undone.`)){
+        reports.splice(idx, 1);
+        renderReporting(currentReportFilter);
+        closeModal();
+        showToast(`Deleted "${report.name}"`);
+      }
+      return;
+    }
+
+    const editBtn = e.target.closest("[data-report-edit]");
+    if(editBtn){
+      openEditReportModal(Number(editBtn.dataset.reportEdit));
+      return;
+    }
+
     if(e.target === overlay || e.target.closest("[data-modal-close]")) closeModal();
   });
 
@@ -555,6 +616,22 @@ function setupModal(){
   overlay.addEventListener("submit", e => {
     e.preventDefault();
     const form = e.target;
+
+    if(form.id === "editReportForm"){
+      const idx = Number(form.dataset.reportIndex);
+      const report = reports[idx];
+      if(!report) return;
+      const fd = new FormData(form);
+      const name = fd.get("name").trim();
+      const due = fd.get("due").trim();
+      if(!name || !due) return;
+      report.name = name;
+      report.due = due;
+      renderReporting(currentReportFilter);
+      closeModal();
+      showToast(`Updated "${report.name}"`);
+      return;
+    }
 
     if(form.id === "newMeetingForm"){
       const fd = new FormData(form);
@@ -644,7 +721,7 @@ function setupReportsTable(){
       renderReporting(currentReportFilter);
       showToast(`Submitted "${report.name}"`);
     } else {
-      showToast(`Viewing "${report.name}"`);
+      openViewReportModal(idx);
     }
   });
   document.getElementById("archiveTableBody").addEventListener("click", e => {
