@@ -1,3 +1,11 @@
+// ---------- FIREBASE ----------
+import { db } from "./firebase-init.js";
+import {
+  ref, onValue, push, set, update, remove, get, child
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+const reportsRef = ref(db, "reports");
+
 // ---------- DATA ----------
 const departments = [
   {
@@ -138,7 +146,10 @@ const schedule = [
   }
 ];
 
-const reports = [
+// One-time seed data — only written to Firestore if the "reports" collection
+// is empty (e.g. brand new Firebase project). After that, Firestore is the
+// single source of truth and this array is unused.
+const seedReports = [
   { dept: "IMRS", tagClass: "tag-imrs", name: "Admissions Summary — June", due: "Jul 24, 2026", status: "pending", dateReported: "", pointPerson: "Angel Fortuno", notes: "" },
   { dept: "OPD", tagClass: "tag-opd", name: "HEPA Filter Inspection Log", due: "Jul 22, 2026", status: "overdue", dateReported: "", pointPerson: "Grace Manlangit", notes: "Awaiting filter delivery" },
   { dept: "Medical Records", tagClass: "tag-mr", name: "Chart Room Rehabilitation Update", due: "Jul 25, 2026", status: "pending", dateReported: "", pointPerson: "Grace Manlangit", notes: "" },
@@ -147,6 +158,34 @@ const reports = [
   { dept: "IMRS", tagClass: "tag-imrs", name: "Veridata Sync Report", due: "Jul 18, 2026", status: "submitted", dateReported: "Jul 18, 2026", pointPerson: "Angel Fortuno", notes: "Synced successfully" },
   { dept: "OPD", tagClass: "tag-opd", name: "TB Patient HNO Log", due: "Jul 19, 2026", status: "submitted", dateReported: "Jul 19, 2026", pointPerson: "Grace Manlangit", notes: "" }
 ];
+
+// Live-synced from Firestore. Populated by watchReports() below; do not
+// push/splice this directly — write to Firestore and let the listener update it.
+let reports = [];
+
+async function seedReportsIfEmpty(){
+  const snap = await get(reportsRef);
+  if(snap.exists()) return;
+  const updates = {};
+  seedReports.forEach(r => {
+    const newKey = push(reportsRef).key;
+    updates[newKey] = { ...r, createdAt: Date.now() };
+  });
+  await update(reportsRef, updates);
+}
+
+function watchReports(){
+  onValue(reportsRef, snap => {
+    const val = snap.val() || {};
+    reports = Object.entries(val)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    renderReporting(currentReportFilter);
+  }, err => {
+    console.error("Failed to load reports from Realtime Database:", err);
+    showToast("Couldn't load reports — check your connection");
+  });
+}
 
 const archiveReports = [
   { dept: "IMRS", tagClass: "tag-imrs", name: "Admissions Summary — May", submitted: "Jun 3, 2026", status: "approved" },
@@ -715,10 +754,15 @@ function setupModal(){
       const idx = Number(deleteBtn.dataset.reportDelete);
       const report = reports[idx];
       if(report && confirm(`Delete "${report.name}"? This can't be undone.`)){
-        reports.splice(idx, 1);
-        renderReporting(currentReportFilter);
-        closeModal();
-        showToast(`Deleted "${report.name}"`);
+        remove(child(reportsRef, report.id))
+          .then(() => {
+            closeModal();
+            showToast(`Deleted "${report.name}"`);
+          })
+          .catch(err => {
+            console.error("Failed to delete report:", err);
+            showToast("Couldn't delete report — try again");
+          });
       }
       return;
     }
@@ -748,14 +792,22 @@ function setupModal(){
       const name = fd.get("name").trim();
       const due = fd.get("due").trim();
       if(!name || !due) return;
-      report.name = name;
-      report.due = due;
-      report.dateReported = fd.get("dateReported").trim();
-      report.pointPerson = fd.get("pointPerson").trim();
-      report.notes = fd.get("notes").trim();
-      renderReporting(currentReportFilter);
-      closeModal();
-      showToast(`Updated "${report.name}"`);
+      const updates = {
+        name,
+        due,
+        dateReported: fd.get("dateReported").trim(),
+        pointPerson: fd.get("pointPerson").trim(),
+        notes: fd.get("notes").trim()
+      };
+      update(child(reportsRef, report.id), updates)
+        .then(() => {
+          closeModal();
+          showToast(`Updated "${name}"`);
+        })
+        .catch(err => {
+          console.error("Failed to update report:", err);
+          showToast("Couldn't save changes — try again");
+        });
       return;
     }
 
@@ -767,7 +819,7 @@ function setupModal(){
       if(!dept || !name || !due) return;
       const dateReported = fd.get("dateReported").trim();
       const deptTagMap = JSON.parse(form.dataset.deptTagMap || "{}");
-      reports.unshift({
+      set(push(reportsRef), {
         dept,
         tagClass: deptTagMap[dept] || "tag-imrs",
         name,
@@ -775,11 +827,17 @@ function setupModal(){
         status: dateReported ? "submitted" : "pending",
         dateReported,
         pointPerson: fd.get("pointPerson").trim(),
-        notes: fd.get("notes").trim()
-      });
-      renderReporting(currentReportFilter);
-      closeModal();
-      showToast(`Added "${name}" for ${dept}`);
+        notes: fd.get("notes").trim(),
+        createdAt: Date.now()
+      })
+        .then(() => {
+          closeModal();
+          showToast(`Added "${name}" for ${dept}`);
+        })
+        .catch(err => {
+          console.error("Failed to add report:", err);
+          showToast("Couldn't add report — try again");
+        });
       return;
     }
 
@@ -872,10 +930,15 @@ function setupReportsTable(){
     if(!report) return;
 
     if(btn.textContent.trim() === "Submit"){
-      report.status = "submitted";
-      report.dateReported = todayShort();
-      renderReporting(currentReportFilter);
-      showToast(`Submitted "${report.name}"`);
+      update(child(reportsRef, report.id), {
+        status: "submitted",
+        dateReported: todayShort()
+      })
+        .then(() => showToast(`Submitted "${report.name}"`))
+        .catch(err => {
+          console.error("Failed to submit report:", err);
+          showToast("Couldn't submit report — try again");
+        });
     } else {
       openViewReportModal(idx);
     }
@@ -963,7 +1026,7 @@ function setGreeting(){
   document.getElementById("greeting").textContent = `Good ${part}, ${first}!`;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   renderDepartments();
   renderSchedule();
   animateCounters();
@@ -980,4 +1043,12 @@ document.addEventListener("DOMContentLoaded", () => {
   setupSettings();
   setupMisc();
   setupModal();
+
+  renderReporting(currentReportFilter);
+  try {
+    await seedReportsIfEmpty();
+  } catch(err) {
+    console.error("Failed to seed reports:", err);
+  }
+  watchReports();
 });
