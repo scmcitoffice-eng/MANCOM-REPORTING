@@ -225,6 +225,7 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
   gap:16px;
   margin-top:24px;
 }
+.hero .stat-row{grid-template-columns:repeat(2,minmax(0,1fr));}
 .stat-card{
   background:var(--card);
   border-radius:var(--radius-md);

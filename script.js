@@ -598,12 +598,6 @@ function setupNav(){
 }
 
 // ---------- QUICK ACTIONS ----------
-const quickActionMap = {
-  "View Schedules": "schedule",
-  "Meeting Agenda": "meetings",
-  "Documents": "documents",
-  "Reports Archive": "archive"
-};
 const modalActionMap = {
   "Submit Report": () => openAddReportModal(),
   "New Meeting": openNewMeetingModal,
@@ -615,10 +609,7 @@ function setupQuickActions(){
     const btn = e.target.closest("[data-action]");
     if(!btn) return;
     const action = btn.dataset.action;
-    if(quickActionMap[action]){
-      switchView(quickActionMap[action]);
-      showToast(`Opened ${action}`);
-    } else if(modalActionMap[action]){
+    if(modalActionMap[action]){
       modalActionMap[action]();
     } else {
       showToast(`${action} — coming soon`);
