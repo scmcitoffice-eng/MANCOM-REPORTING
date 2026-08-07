@@ -183,7 +183,7 @@ function watchReports(){
     renderReporting(currentReportFilter);
   }, err => {
     console.error("Failed to load reports from Realtime Database:", err);
-    showToast("Couldn't load reports — check your connection");
+    showToast(`Couldn't load reports: ${err.message || err.code || err}`);
   });
 }
 
@@ -761,7 +761,7 @@ function setupModal(){
           })
           .catch(err => {
             console.error("Failed to delete report:", err);
-            showToast("Couldn't delete report — try again");
+            showToast(`Couldn't delete report: ${err.message || err.code || err}`);
           });
       }
       return;
@@ -806,7 +806,7 @@ function setupModal(){
         })
         .catch(err => {
           console.error("Failed to update report:", err);
-          showToast("Couldn't save changes — try again");
+          showToast(`Couldn't save changes: ${err.message || err.code || err}`);
         });
       return;
     }
@@ -836,7 +836,7 @@ function setupModal(){
         })
         .catch(err => {
           console.error("Failed to add report:", err);
-          showToast("Couldn't add report — try again");
+          showToast(`Couldn't add report: ${err.message || err.code || err}`);
         });
       return;
     }
@@ -937,7 +937,7 @@ function setupReportsTable(){
         .then(() => showToast(`Submitted "${report.name}"`))
         .catch(err => {
           console.error("Failed to submit report:", err);
-          showToast("Couldn't submit report — try again");
+          showToast(`Couldn't submit report: ${err.message || err.code || err}`);
         });
     } else {
       openViewReportModal(idx);
@@ -1049,6 +1049,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await seedReportsIfEmpty();
   } catch(err) {
     console.error("Failed to seed reports:", err);
+    showToast(`Couldn't seed reports: ${err.message || err.code || err}`);
   }
   watchReports();
 });
