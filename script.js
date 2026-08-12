@@ -371,6 +371,7 @@ function renderReportAnalytics(){
       }).join("");
 
   const onTimeRate = total === 0 ? 0 : Math.round((counts.submitted / total) * 100);
+  const completionRate = total === 0 ? 0 : Math.round((counts.completed / total) * 100);
 
   panel.innerHTML = `
     <div class="analytics-donut">
@@ -389,8 +390,14 @@ function renderReportAnalytics(){
       `).join("")}
     </div>
     <div class="analytics-rate">
-      <div class="num">${onTimeRate}%</div>
-      <div class="lbl">On Going this week</div>
+      <div class="rate-item">
+        <div class="num">${onTimeRate}%</div>
+        <div class="lbl">On Going this week</div>
+      </div>
+      <div class="rate-item">
+        <div class="num rate-completed">${completionRate}%</div>
+        <div class="lbl">Completion rate</div>
+      </div>
     </div>
   `;
 }
