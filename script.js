@@ -326,11 +326,11 @@ function renderSchedule(){
 
 // ---------- REPORT COUNT HELPER ----------
 function computeReportCounts(){
-  const counts = { overdue: 0, pending: 0, submitted: 0 };
+  const counts = { overdue: 0, pending: 0, submitted: 0, completed: 0 };
   reports.forEach(r => {
     if(counts[r.status] !== undefined) counts[r.status]++;
   });
-  const total = counts.overdue + counts.pending + counts.submitted;
+  const total = counts.overdue + counts.pending + counts.submitted + counts.completed;
   return { counts, total };
 }
 
@@ -343,7 +343,8 @@ function renderReportAnalytics(){
   const segments = [
     { key: "overdue",   label: "Overdue",   color: "#c1493c", count: counts.overdue },
     { key: "pending",   label: "Pending",   color: "#b3721a", count: counts.pending },
-    { key: "submitted", label: "On Going", color: "#1f8a4d", count: counts.submitted }
+    { key: "submitted", label: "On Going", color: "#1f8a4d", count: counts.submitted },
+    { key: "completed", label: "Completed", color: "#2860c9", count: counts.completed }
   ];
 
   const radius = 50;
@@ -406,12 +407,16 @@ function renderReportSummary(){
       <span class="rs-count">${counts.submitted}</span>
       <span class="rs-label">On Going</span>
     </div>
+    <div class="rs-stat rs-completed">
+      <span class="rs-count">${counts.completed}</span>
+      <span class="rs-label">Completed</span>
+    </div>
   `;
 
-  const statusRank = { overdue: 0, pending: 1, submitted: 2 };
+  const statusRank = { overdue: 0, pending: 1, submitted: 2, completed: 3 };
   const upcoming = [...reports]
-    .filter(r => r.status !== "submitted")
-    .sort((a, b) => (statusRank[a.status] ?? 3) - (statusRank[b.status] ?? 3))
+    .filter(r => r.status !== "submitted" && r.status !== "completed")
+    .sort((a, b) => (statusRank[a.status] ?? 4) - (statusRank[b.status] ?? 4))
     .slice(0, 4);
 
   listEl.innerHTML = upcoming.map(r => `
@@ -437,7 +442,7 @@ const statusMeta = {
   revision:  { label: "Needs Revision", cls: "badge-overdue" },
   processing:{ label: "Processing", cls: "badge-upcoming" },
   ready:     { label: "Ready",     cls: "badge-started" },
-  completed: { label: "Completed", cls: "badge-ongoing" },
+  completed: { label: "Completed", cls: "badge-started" },
   active:    { label: "Active",    cls: "badge-ongoing" },
   inactive:  { label: "Inactive",  cls: "badge-overdue" }
 };
@@ -870,7 +875,8 @@ function openEditReportModal(idx){
   const statusOptions = [
     { value: "pending", label: "Pending" },
     { value: "overdue", label: "Overdue" },
-    { value: "submitted", label: "On Going" }
+    { value: "submitted", label: "On Going" },
+    { value: "completed", label: "Completed" }
   ];
   openModal(`
     <div class="modal-head">

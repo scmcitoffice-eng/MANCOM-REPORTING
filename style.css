@@ -546,6 +546,8 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
 .rs-stat.rs-pending .rs-count{color:var(--badge-upcoming-fg);}
 .rs-stat.rs-submitted{background:var(--badge-ongoing-bg);}
 .rs-stat.rs-submitted .rs-count{color:var(--badge-ongoing-fg);}
+.rs-stat.rs-completed{background:var(--badge-started-bg);}
+.rs-stat.rs-completed .rs-count{color:var(--badge-started-fg);}
 .timeline .t-desc .dept-tag{margin-top:4px;display:inline-block;}
 
 /* ---------- VIEWS ---------- */
