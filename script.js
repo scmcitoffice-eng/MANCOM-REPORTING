@@ -343,7 +343,7 @@ function renderReportAnalytics(){
   const segments = [
     { key: "overdue",   label: "Overdue",   color: "#c1493c", count: counts.overdue },
     { key: "pending",   label: "Pending",   color: "#b3721a", count: counts.pending },
-    { key: "submitted", label: "Submitted", color: "#1f8a4d", count: counts.submitted }
+    { key: "submitted", label: "On Going", color: "#1f8a4d", count: counts.submitted }
   ];
 
   const radius = 50;
@@ -380,7 +380,7 @@ function renderReportAnalytics(){
     </div>
     <div class="analytics-rate">
       <div class="num">${onTimeRate}%</div>
-      <div class="lbl">Submitted this week</div>
+      <div class="lbl">On Going this week</div>
     </div>
   `;
 }
@@ -404,7 +404,7 @@ function renderReportSummary(){
     </div>
     <div class="rs-stat rs-submitted">
       <span class="rs-count">${counts.submitted}</span>
-      <span class="rs-label">Submitted</span>
+      <span class="rs-label">On Going</span>
     </div>
   `;
 
@@ -425,14 +425,14 @@ function renderReportSummary(){
         ${badge(r.status)}
       </div>
     </li>
-  `).join("") || `<li class="empty-row" style="border-left:2px solid transparent;">All reports are submitted.</li>`;
+  `).join("") || `<li class="empty-row" style="border-left:2px solid transparent;">No reports pending.</li>`;
 }
 
 // ---------- STATUS HELPERS ----------
 const statusMeta = {
   pending:   { label: "Pending",   cls: "badge-upcoming" },
   overdue:   { label: "Overdue",   cls: "badge-overdue" },
-  submitted: { label: "Submitted", cls: "badge-ongoing" },
+  submitted: { label: "On Going", cls: "badge-ongoing" },
   approved:  { label: "Approved",  cls: "badge-ongoing" },
   revision:  { label: "Needs Revision", cls: "badge-overdue" },
   processing:{ label: "Processing", cls: "badge-upcoming" },
