@@ -237,14 +237,6 @@ function watchMeetings(){
   });
 }
 
-const archiveReports = [
-  { dept: "IMRS", tagClass: "tag-imrs", name: "Admissions Summary — May", submitted: "Jun 3, 2026", status: "approved" },
-  { dept: "GSS", tagClass: "tag-gss", name: "Dialysis Renovation Progress", submitted: "Jun 10, 2026", status: "approved" },
-  { dept: "Accounting & Finance", tagClass: "tag-af", name: "Bullseye POS Reconciliation", submitted: "Jun 14, 2026", status: "approved" },
-  { dept: "Medical Records", tagClass: "tag-mr", name: "Wooden Barrier Follow-up", submitted: "Jun 20, 2026", status: "revision" },
-  { dept: "OPD", tagClass: "tag-opd", name: "Signage Replacement Report", submitted: "Jun 27, 2026", status: "approved" }
-];
-
 const records = [
   { chart: "CR-10432", patient: "R. Domingo", request: "Discharge summary copy", requested: "Jul 21, 2026", status: "processing" },
   { chart: "CR-10388", patient: "M. Villareal", request: "Full chart retrieval", requested: "Jul 20, 2026", status: "ready" },
@@ -496,25 +488,6 @@ function renderReporting(filterDept){
   filters.innerHTML = depts.map(d => `<button class="chip ${(!filterDept && d === "All") || d === filterDept ? "chip-active" : ""}" data-filter="${d}">${d}</button>`).join("");
 }
 
-// ---------- RENDER ARCHIVE ----------
-function renderArchive(filterDept){
-  const body = document.getElementById("archiveTableBody");
-  const rows = archiveReports.filter(r => !filterDept || r.dept === filterDept);
-  body.innerHTML = rows.map(r => `
-    <tr>
-      <td><span class="dept-tag ${r.tagClass}">${r.dept}</span></td>
-      <td class="cell-main">${r.name}</td>
-      <td>${r.submitted}</td>
-      <td>${badge(r.status)}</td>
-      <td class="cell-action"><button class="link-btn">Download</button></td>
-    </tr>
-  `).join("") || `<tr><td colspan="5" class="empty-row">No archived reports for this department.</td></tr>`;
-
-  const filters = document.getElementById("archiveFilters");
-  const depts = ["All", ...new Set(archiveReports.map(r => r.dept))];
-  filters.innerHTML = depts.map(d => `<button class="chip ${(!filterDept && d === "All") || d === filterDept ? "chip-active" : ""}" data-filter="${d}">${d}</button>`).join("");
-}
-
 // ---------- RENDER RECORDS ----------
 function renderRecords(query){
   const body = document.getElementById("recordsTableBody");
@@ -677,8 +650,7 @@ const viewInit = {
   schedule: () => renderFullSchedule("Mon"),
   meetings: renderMeetings,
   documents: renderDocuments,
-  users: renderUsers,
-  archive: () => renderArchive()
+  users: renderUsers
 };
 
 function switchView(viewId, opts){
@@ -690,7 +662,6 @@ function switchView(viewId, opts){
 
   if(viewInit[viewId]) viewInit[viewId]();
   if(opts && opts.dept && viewId === "reporting") renderReporting(opts.dept);
-  if(opts && opts.dept && viewId === "archive") renderArchive(opts.dept);
 
   document.querySelector(".main").scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1113,17 +1084,12 @@ function setupDeptLinks(){
   });
 }
 
-// ---------- REPORTING / ARCHIVE FILTERS ----------
+// ---------- REPORTING FILTERS ----------
 function setupFilterChips(){
   document.getElementById("reportFilters").addEventListener("click", e => {
     const chip = e.target.closest(".chip");
     if(!chip) return;
     renderReporting(chip.dataset.filter === "All" ? null : chip.dataset.filter);
-  });
-  document.getElementById("archiveFilters").addEventListener("click", e => {
-    const chip = e.target.closest(".chip");
-    if(!chip) return;
-    renderArchive(chip.dataset.filter === "All" ? null : chip.dataset.filter);
   });
 }
 
@@ -1141,11 +1107,6 @@ function setupReportsTable(){
     } else {
       openViewReportModal(idx);
     }
-  });
-  document.getElementById("archiveTableBody").addEventListener("click", e => {
-    const btn = e.target.closest(".link-btn");
-    if(!btn) return;
-    showToast("Downloading report…");
   });
   document.getElementById("documentsTableBody").addEventListener("click", e => {
     const btn = e.target.closest(".link-btn");
