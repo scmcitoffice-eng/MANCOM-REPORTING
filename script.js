@@ -29,6 +29,10 @@ function applyCurrentUserToChrome(){
   document.querySelectorAll(".avatar, .user-avatar").forEach(el => el.textContent = initials(currentUser.name));
   const settingName = document.getElementById("settingName");
   if(settingName) settingName.value = currentUser.name;
+
+  // Only admin accounts get the Users nav item at all.
+  const usersNavItem = document.getElementById("usersNavItem");
+  if(usersNavItem) usersNavItem.hidden = currentUser.accountRole !== "admin";
 }
 // ---------- NOTIFICATIONS ----------
 // Bell notifications for: (1) a report being added (by anyone, since
@@ -966,9 +970,51 @@ function setupNav(){
         switchView("settings");
         return;
       }
+      if(view === "users"){
+        // Belt-and-suspenders: the nav item is hidden for non-admins already,
+        // but re-check here in case accountRole changed after page load.
+        if(currentUser.accountRole !== "admin"){
+          showToast("Only admins can access Users.");
+          return;
+        }
+        openConfirmPasswordModal({
+          title: "Confirm Access",
+          message: "Enter your account password to open Users.",
+          onSuccess: () => switchView("users")
+        });
+        return;
+      }
       switchView(view);
     });
   });
+}
+
+// ---------- REAUTH FOR SENSITIVE VIEWS ----------
+// Re-checks the signed-in user's password against Firebase before letting
+// them through to a sensitive area (currently: Users). Fetches the user's
+// record fresh each time rather than trusting anything cached client-side.
+let pendingPasswordConfirm = null;
+
+function openConfirmPasswordModal({ title, message, onSuccess }){
+  pendingPasswordConfirm = { onSuccess };
+  openModal(`
+    <div class="modal-head">
+      <h3>${title}</h3>
+      <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </div>
+    <form id="confirmPasswordForm" class="modal-form">
+      <p class="confirm-hint">${message}</p>
+      <div class="confirm-error" id="confirmPasswordError" hidden></div>
+      <label class="field">
+        <span>Password</span>
+        <input type="password" name="password" required autocomplete="current-password" autofocus>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
+        <button type="submit" class="primary-btn">Confirm</button>
+      </div>
+    </form>
+  `);
 }
 
 // ---------- QUICK ACTIONS ----------
@@ -1000,6 +1046,7 @@ function openModal(html){
 }
 function closeModal(){
   document.getElementById("modalOverlay").classList.remove("show");
+  pendingPasswordConfirm = null;
 }
 function formatFileSize(bytes){
   if(bytes < 1024) return bytes + " B";
@@ -1277,6 +1324,48 @@ function setupModal(){
   overlay.addEventListener("submit", e => {
     e.preventDefault();
     const form = e.target;
+
+    if(form.id === "confirmPasswordForm"){
+      const fd = new FormData(form);
+      const enteredPassword = fd.get("password");
+      const errorBox = document.getElementById("confirmPasswordError");
+      const submitBtn = form.querySelector("button[type=submit]");
+      const confirmAction = pendingPasswordConfirm;
+
+      if(!confirmAction){ closeModal(); return; }
+      if(errorBox) errorBox.hidden = true;
+      if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = "Checking…"; }
+
+      // Fetch the current user's record fresh from Firebase rather than
+      // trusting anything cached in memory or sessionStorage.
+      get(child(usersRef, currentUser.id))
+        .then(snap => {
+          const record = snap.val();
+          if(record && record.password === enteredPassword){
+            const onSuccess = confirmAction.onSuccess;
+            pendingPasswordConfirm = null;
+            closeModal();
+            if(onSuccess) onSuccess();
+          } else {
+            if(errorBox){
+              errorBox.textContent = "Incorrect password.";
+              errorBox.hidden = false;
+            }
+            if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = "Confirm"; }
+            form.querySelector('input[name="password"]').value = "";
+            form.querySelector('input[name="password"]').focus();
+          }
+        })
+        .catch(err => {
+          console.error("Failed to verify password:", err);
+          if(errorBox){
+            errorBox.textContent = `Couldn't verify password: ${err.message || err.code || err}`;
+            errorBox.hidden = false;
+          }
+          if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = "Confirm"; }
+        });
+      return;
+    }
 
     if(form.id === "editReportForm"){
       const idx = Number(form.dataset.reportIndex);
