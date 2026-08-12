@@ -6,6 +6,11 @@ import {
 
 const reportsRef = ref(db, "reports");
 const meetingsRef = ref(db, "meetings");
+// Flags that record whether the one-time seed has already run, so that
+// deleting every report/meeting doesn't make the app think the collection
+// was "never seeded" and write the seed data back in on the next reload.
+const reportsSeededRef = ref(db, "_meta/reportsSeeded");
+const meetingsSeededRef = ref(db, "_meta/meetingsSeeded");
 
 // ---------- DATA ----------
 const departments = [
@@ -147,9 +152,10 @@ const schedule = [
   }
 ];
 
-// One-time seed data — only written to Firestore if the "reports" collection
-// is empty (e.g. brand new Firebase project). After that, Firestore is the
-// single source of truth and this array is unused.
+// One-time seed data — only written the very first time the app runs
+// against a Firebase project (tracked via the reportsSeededRef flag).
+// After that, Firebase is the single source of truth and this array is
+// unused, even if every report is later deleted.
 const seedReports = [
   { dept: "IMRS", tagClass: "tag-imrs", name: "Admissions Summary — June", due: "Jul 24, 2026", status: "pending", dateReported: "", pointPerson: "Angel Fortuno", notes: "" },
   { dept: "OPD", tagClass: "tag-opd", name: "HEPA Filter Inspection Log", due: "Jul 22, 2026", status: "overdue", dateReported: "", pointPerson: "Grace Manlangit", notes: "Awaiting filter delivery" },
@@ -165,14 +171,15 @@ const seedReports = [
 let reports = [];
 
 async function seedReportsIfEmpty(){
-  const snap = await get(reportsRef);
-  if(snap.exists()) return;
+  const seededSnap = await get(reportsSeededRef);
+  if(seededSnap.exists()) return;
   const updates = {};
   seedReports.forEach(r => {
     const newKey = push(reportsRef).key;
     updates[newKey] = { ...r, createdAt: Date.now() };
   });
   await update(reportsRef, updates);
+  await set(reportsSeededRef, true);
 }
 
 function watchReports(){
@@ -190,9 +197,10 @@ function watchReports(){
   });
 }
 
-// One-time seed data — only written to Firestore if the "meetings" collection
-// is empty (e.g. brand new Firebase project). After that, Firestore is the
-// single source of truth and this array is unused.
+// One-time seed data — only written the very first time the app runs
+// against a Firebase project (tracked via the meetingsSeededRef flag).
+// After that, Firebase is the single source of truth and this array is
+// unused, even if every meeting is later deleted.
 const seedMeetings = [
   { title: "IMRS / OPD Updates", time: "Today · 3:41 PM", attendees: "HA, HD, MD, GSS, Marketing", agenda: ["Review admission numbers", "Discuss OPD signage rollout", "HNO status for TB patients"] },
   { title: "GSS Facilities Sync", time: "Today · 3:53 PM", attendees: "GSS, Engineering", agenda: ["BFP requirements walkthrough", "Dialysis renovation timeline"] },
@@ -205,14 +213,15 @@ const seedMeetings = [
 let meetings = [];
 
 async function seedMeetingsIfEmpty(){
-  const snap = await get(meetingsRef);
-  if(snap.exists()) return;
+  const seededSnap = await get(meetingsSeededRef);
+  if(seededSnap.exists()) return;
   const updates = {};
   seedMeetings.forEach(m => {
     const newKey = push(meetingsRef).key;
     updates[newKey] = { ...m, createdAt: Date.now() };
   });
   await update(meetingsRef, updates);
+  await set(meetingsSeededRef, true);
 }
 
 function watchMeetings(){
