@@ -700,6 +700,14 @@ function roleBadge(accountRole){
   return `<span class="badge ${isAdmin ? "badge-role-admin" : "badge-role-user"}">${isAdmin ? "Admin" : "User"}</span>`;
 }
 
+// Builds <option> tags from the same department list that drives the
+// Department Reports grid, so Users always chooses from a real department.
+function deptOptionsHtml(selected){
+  return departments.map(d =>
+    `<option value="${d.title}" ${d.title === selected ? "selected" : ""}>${d.title}</option>`
+  ).join("");
+}
+
 // ---------- RENDER REPORTING ----------
 let currentReportFilter = null;
 function renderReporting(filterDept){
@@ -1142,7 +1150,13 @@ function openAddUserModal(){
     <form id="addUserForm" class="modal-form">
       <label class="field"><span>Full name</span><input type="text" name="name" required placeholder="e.g. Juan Dela Cruz"></label>
       <label class="field"><span>Role</span><input type="text" name="role" placeholder="e.g. Records Clerk"></label>
-      <label class="field"><span>Department</span><input type="text" name="dept" placeholder="e.g. Medical Records"></label>
+      <label class="field">
+        <span>Department</span>
+        <select name="dept" required>
+          <option value="" selected disabled>Select department</option>
+          ${deptOptionsHtml()}
+        </select>
+      </label>
       <label class="field"><span>Username</span><input type="text" name="username" required placeholder="e.g. j.delacruz" autocomplete="off"></label>
       <label class="field"><span>Password</span><input type="text" name="password" required placeholder="e.g. p@ssw0rd" autocomplete="off"></label>
       <label class="field">
@@ -1171,7 +1185,13 @@ function openEditUserModal(id){
     <form id="editUserForm" class="modal-form" data-user-id="${user.id}">
       <label class="field"><span>Full name</span><input type="text" name="name" required value="${user.name}"></label>
       <label class="field"><span>Role</span><input type="text" name="role" value="${user.role}" placeholder="e.g. Records Clerk"></label>
-      <label class="field"><span>Department</span><input type="text" name="dept" value="${user.dept}" placeholder="e.g. Medical Records"></label>
+      <label class="field">
+        <span>Department</span>
+        <select name="dept" required>
+          <option value="" ${!user.dept ? "selected" : ""} disabled>Select department</option>
+          ${deptOptionsHtml(user.dept)}
+        </select>
+      </label>
       <label class="field"><span>Username</span><input type="text" name="username" required value="${user.username || ""}" autocomplete="off"></label>
       <label class="field"><span>Password</span><input type="text" name="password" value="${user.password || ""}" placeholder="e.g. p@ssw0rd" autocomplete="off"></label>
       <label class="field">
