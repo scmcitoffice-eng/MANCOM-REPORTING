@@ -1,15 +1,23 @@
 // login.js
-// Simple client-side gate for the St. Camillus Reporting Dashboard.
+// Client-side sign-in for the St. Camillus Reporting Dashboard.
+// Checks the username/password against the "users" list in Firebase
+// Realtime Database (the same list managed on the Users page), rather
+// than a single hardcoded account.
 //
-// NOTE: This is a client-side-only check. The credentials below are visible
-// to anyone who views this file's source, and the check can be bypassed by
-// navigating to index.html directly or editing sessionStorage. It's a basic
-// deterrent, not real access control. For genuine security, replace this
-// with Firebase Authentication (email/password or similar), since the
-// Firebase Auth SDK can be added alongside the existing Firebase setup.
+// NOTE: This still performs the check in the browser, so it's a basic
+// access gate rather than hardened security — anyone who opens dev tools
+// can read the fetched user records for the moment they're on this page,
+// and index.html can still be reached directly by anyone who guesses/sets
+// sessionStorage. For genuine security, replace this with Firebase
+// Authentication (email/password or similar) plus Realtime Database
+// security rules that require an authenticated request.
 
-const VALID_USERNAME = "it_admin";
-const VALID_PASSWORD = "p@ssw0rd";
+import { db } from "./firebase-init.js";
+import {
+  ref, get
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+const usersRef = ref(db, "users");
 
 const form = document.getElementById("loginForm");
 const usernameInput = document.getElementById("loginUsername");
@@ -39,7 +47,12 @@ function showError(message) {
   card.classList.add("shake");
 }
 
-form.addEventListener("submit", (e) => {
+function setSubmitting(isSubmitting) {
+  submitBtn.disabled = isSubmitting;
+  submitBtn.textContent = isSubmitting ? "Signing in…" : "Sign In";
+}
+
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const username = usernameInput.value.trim();
@@ -50,21 +63,45 @@ form.addEventListener("submit", (e) => {
     return;
   }
 
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Signing in…";
+  setSubmitting(true);
 
-  // Tiny delay so it doesn't feel instantaneous/fake.
-  setTimeout(() => {
-    if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-      sessionStorage.setItem("scmc_auth", "1");
-      sessionStorage.setItem("scmc_user", username);
-      window.location.replace("index.html");
-    } else {
+  try {
+    const snap = await get(usersRef);
+    const usersVal = snap.val() || {};
+    const entry = Object.entries(usersVal).find(([, u]) =>
+      (u.username || "").toLowerCase() === username.toLowerCase() && u.password === password
+    );
+
+    if (!entry) {
       showError("Incorrect username or password.");
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Sign In";
+      setSubmitting(false);
       passwordInput.value = "";
       passwordInput.focus();
+      return;
     }
-  }, 350);
+
+    const [id, user] = entry;
+
+    if (user.status === "inactive") {
+      showError("This account has been deactivated. Contact your IT administrator.");
+      setSubmitting(false);
+      passwordInput.value = "";
+      return;
+    }
+
+    sessionStorage.setItem("scmc_auth", "1");
+    sessionStorage.setItem("scmc_user", user.username);
+    sessionStorage.setItem("scmc_current_user", JSON.stringify({
+      id,
+      name: user.name,
+      role: user.role || "Staff",
+      dept: user.dept || "",
+      accountRole: user.accountRole || "user"
+    }));
+    window.location.replace("index.html");
+  } catch (err) {
+    console.error("Login failed:", err);
+    showError("Couldn't reach the sign-in service. Check your connection and try again.");
+    setSubmitting(false);
+  }
 });

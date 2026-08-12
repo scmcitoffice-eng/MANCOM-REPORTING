@@ -7,6 +7,29 @@ import {
 const reportsRef = ref(db, "reports");
 const meetingsRef = ref(db, "meetings");
 const usersRef = ref(db, "users");
+
+// ---------- CURRENT SESSION ----------
+// Populated by login.js on successful sign-in (see sessionStorage keys below).
+// Falls back to placeholder values only if something bypassed the login flow.
+let currentUser = { id: "", name: "Staff", role: "Staff", accountRole: "user" };
+try {
+  const stored = JSON.parse(sessionStorage.getItem("scmc_current_user") || "null");
+  if(stored) currentUser = stored;
+} catch(err) {
+  console.error("Failed to read stored session user:", err);
+}
+
+function initials(name){
+  return (name || "").trim().split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "?";
+}
+
+function applyCurrentUserToChrome(){
+  document.querySelectorAll(".who-name, .user-name").forEach(el => el.textContent = currentUser.name);
+  document.querySelectorAll(".who-role, .user-role").forEach(el => el.textContent = currentUser.role);
+  document.querySelectorAll(".avatar, .user-avatar").forEach(el => el.textContent = initials(currentUser.name));
+  const settingName = document.getElementById("settingName");
+  if(settingName) settingName.value = currentUser.name;
+}
 // Flags that record whether the one-time seed has already run, so that
 // deleting every report/meeting/user doesn't make the app think the collection
 // was "never seeded" and write the seed data back in on the next reload.
@@ -679,6 +702,7 @@ function renderUsers(){
       <td class="cell-action">
         <button class="link-btn" data-user-edit="${u.id}">Edit</button>
         <button class="link-btn" data-user-toggle="${u.id}">${u.status === "active" ? "Deactivate" : "Activate"}</button>
+        <button class="link-btn link-btn-danger" data-user-delete="${u.id}">Delete</button>
       </td>
     </tr>
   `).join("");
@@ -1315,6 +1339,26 @@ function setupUsersTable(){
       openEditUserModal(editBtn.dataset.userEdit);
       return;
     }
+    const deleteBtn = e.target.closest("[data-user-delete]");
+    if(deleteBtn){
+      const id = deleteBtn.dataset.userDelete;
+      const user = users.find(u => u.id === id);
+      if(!user) return;
+      if(id === currentUser.id){
+        showToast("You can't delete the account you're currently signed in with.");
+        return;
+      }
+      if(confirm(`Delete "${user.name}"? This removes their login access and can't be undone.`)){
+        remove(child(usersRef, id))
+          .then(() => showToast(`Deleted ${user.name}`))
+          .catch(err => {
+            console.error("Failed to delete user:", err);
+            showToast(`Couldn't delete user: ${err.message || err.code || err}`);
+          });
+      }
+      return;
+    }
+
     const btn = e.target.closest("[data-user-toggle]");
     if(!btn) return;
     const id = btn.dataset.userToggle;
@@ -1384,12 +1428,14 @@ function setupMisc(){
     showToast("Logging out…");
     sessionStorage.removeItem("scmc_auth");
     sessionStorage.removeItem("scmc_user");
+    sessionStorage.removeItem("scmc_current_user");
     setTimeout(() => { window.location.replace("login.html"); }, 400);
   });
 }
 
 // ---------- INIT ----------
 document.addEventListener("DOMContentLoaded", async () => {
+  applyCurrentUserToChrome();
   renderDepartments();
   renderReportAnalytics();
   setupNav();
