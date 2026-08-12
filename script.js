@@ -183,6 +183,7 @@ function watchReports(){
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     renderReporting(currentReportFilter);
     renderReportSummary();
+    renderReportAnalytics();
   }, err => {
     console.error("Failed to load reports from Realtime Database:", err);
     showToast(`Couldn't load reports: ${err.message || err.code || err}`);
@@ -323,16 +324,74 @@ function renderSchedule(){
   `).join("");
 }
 
+// ---------- REPORT COUNT HELPER ----------
+function computeReportCounts(){
+  const counts = { overdue: 0, pending: 0, submitted: 0 };
+  reports.forEach(r => {
+    if(counts[r.status] !== undefined) counts[r.status]++;
+  });
+  const total = counts.overdue + counts.pending + counts.submitted;
+  return { counts, total };
+}
+
+// ---------- RENDER REPORT ANALYTICS (hero) ----------
+function renderReportAnalytics(){
+  const panel = document.getElementById("analyticsPanel");
+  if(!panel) return;
+
+  const { counts, total } = computeReportCounts();
+  const segments = [
+    { key: "overdue",   label: "Overdue",   color: "#c1493c", count: counts.overdue },
+    { key: "pending",   label: "Pending",   color: "#b3721a", count: counts.pending },
+    { key: "submitted", label: "Submitted", color: "#1f8a4d", count: counts.submitted }
+  ];
+
+  const radius = 50;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+  const arcs = total === 0
+    ? `<circle cx="59" cy="59" r="${radius}" fill="none" stroke="#e7ebe9" stroke-width="14"/>`
+    : segments.filter(s => s.count > 0).map(s => {
+        const frac = s.count / total;
+        const dash = frac * circumference;
+        const circle = `<circle cx="59" cy="59" r="${radius}" fill="none" stroke="${s.color}" stroke-width="14"
+          stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-offset}" stroke-linecap="butt"/>`;
+        offset += dash;
+        return circle;
+      }).join("");
+
+  const onTimeRate = total === 0 ? 0 : Math.round((counts.submitted / total) * 100);
+
+  panel.innerHTML = `
+    <div class="analytics-donut">
+      <svg viewBox="0 0 118 118" width="118" height="118">${arcs}</svg>
+      <div class="analytics-donut-total">
+        <span class="num">${total}</span>
+        <span class="lbl">Reports</span>
+      </div>
+    </div>
+    <div class="analytics-breakdown">
+      ${segments.map(s => `
+        <div class="analytics-item">
+          <span class="name"><span class="dot" style="background:${s.color}"></span>${s.label}</span>
+          <span class="val">${s.count}</span>
+        </div>
+      `).join("")}
+    </div>
+    <div class="analytics-rate">
+      <div class="num">${onTimeRate}%</div>
+      <div class="lbl">Submitted this week</div>
+    </div>
+  `;
+}
+
 // ---------- RENDER REPORT SUMMARY ----------
 function renderReportSummary(){
   const statsEl = document.getElementById("reportSummaryStats");
   const listEl = document.getElementById("reportSummaryList");
   if(!statsEl || !listEl) return;
 
-  const counts = { overdue: 0, pending: 0, submitted: 0 };
-  reports.forEach(r => {
-    if(counts[r.status] !== undefined) counts[r.status]++;
-  });
+  const { counts } = computeReportCounts();
 
   statsEl.innerHTML = `
     <div class="rs-stat rs-overdue">
@@ -574,22 +633,6 @@ function renderFullSchedule(day){
       </div>
     </li>
   `).join("") || `<li class="empty-row" style="border-left:2px solid transparent;">No scheduled items.</li>`;
-}
-
-// ---------- ANIMATED COUNTERS ----------
-function animateCounters(){
-  document.querySelectorAll(".stat-value").forEach(el => {
-    const target = parseInt(el.dataset.count, 10) || 0;
-    const duration = 800;
-    const start = performance.now();
-    function tick(now){
-      const progress = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      el.textContent = Math.round(eased * target);
-      if(progress < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  });
 }
 
 // ---------- TOAST ----------
@@ -1151,7 +1194,6 @@ function setupSettings(){
   document.getElementById("saveProfileBtn").addEventListener("click", () => {
     const name = document.getElementById("settingName").value.trim() || "Lito Cabajar";
     document.querySelectorAll(".who-name, .user-name").forEach(el => el.textContent = name);
-    setGreeting();
     showToast("Profile saved");
   });
   document.querySelectorAll(".toggle-row input[type=checkbox]").forEach(cb => {
@@ -1167,20 +1209,9 @@ function setupMisc(){
 }
 
 // ---------- INIT ----------
-function setGreeting(){
-  const hour = new Date().getHours();
-  let part = "morning";
-  if(hour >= 12 && hour < 18) part = "afternoon";
-  else if(hour >= 18) part = "evening";
-  const name = (document.getElementById("settingName") && document.getElementById("settingName").value.trim()) || "Lito";
-  const first = name.split(" ")[0];
-  document.getElementById("greeting").textContent = `Good ${part}, ${first}!`;
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
   renderDepartments();
-  animateCounters();
-  setGreeting();
+  renderReportAnalytics();
   setupNav();
   setupQuickActions();
   setupDeptLinks();

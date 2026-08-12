@@ -226,6 +226,71 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
   margin-top:24px;
 }
 .hero .stat-row{grid-template-columns:repeat(2,minmax(0,1fr));}
+
+/* ---------- REPORT ANALYTICS (hero) ---------- */
+.analytics-panel{
+  margin-top:24px;
+  background:var(--card);
+  border-radius:var(--radius-md);
+  padding:20px 24px;
+  box-shadow:var(--shadow-card);
+  display:flex;
+  align-items:center;
+  gap:28px;
+  flex-wrap:wrap;
+}
+.analytics-donut{
+  position:relative;
+  width:118px;height:118px;
+  flex:0 0 auto;
+}
+.analytics-donut svg{transform:rotate(-90deg);}
+.analytics-donut-total{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.analytics-donut-total .num{font-size:22px;font-weight:800;color:var(--ink-900);line-height:1.2;}
+.analytics-donut-total .lbl{font-size:10px;font-weight:700;color:var(--ink-500);text-transform:uppercase;letter-spacing:.03em;}
+
+.analytics-breakdown{
+  flex:1 1 200px;
+  min-width:190px;
+  display:flex;
+  flex-direction:column;
+  gap:11px;
+}
+.analytics-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  font-size:13px;
+}
+.analytics-item .name{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--ink-700);
+  font-weight:600;
+}
+.analytics-item .dot{
+  width:9px;height:9px;border-radius:50%;flex:0 0 auto;
+}
+.analytics-item .val{font-weight:800;color:var(--ink-900);}
+
+.analytics-rate{
+  flex:0 0 auto;
+  text-align:center;
+  padding-left:24px;
+  border-left:1px solid rgba(20,30,25,.08);
+}
+.analytics-rate .num{font-size:27px;font-weight:800;color:var(--green-700);line-height:1.2;}
+.analytics-rate .lbl{font-size:11px;font-weight:600;color:var(--ink-500);margin-top:3px;max-width:110px;}
+
+@media (max-width:520px){
+  .analytics-rate{border-left:none;padding-left:0;border-top:1px solid rgba(20,30,25,.08);padding-top:14px;width:100%;}
+}
 .stat-card{
   background:var(--card);
   border-radius:var(--radius-md);
