@@ -244,11 +244,11 @@ function watchMeetings(){
 // After that, Firebase is the single source of truth and this array is
 // unused, even if every user is later removed.
 const seedUsers = [
-  { name: "Lito Cabajar", role: "IT Officer", dept: "IT", accountRole: "admin", status: "active" },
-  { name: "Grace Manlangit", role: "Records Supervisor", dept: "Medical Records", accountRole: "user", status: "active" },
-  { name: "Angel Fortuno", role: "IT Support", dept: "IT", accountRole: "admin", status: "active" },
-  { name: "Rhea Villamor", role: "Finance Officer", dept: "Accounting & Finance", accountRole: "user", status: "active" },
-  { name: "Bong Sarmiento", role: "GSS Coordinator", dept: "GSS", accountRole: "user", status: "inactive" }
+  { name: "Lito Cabajar", role: "IT Officer", dept: "IT", username: "l.cabajar", password: "p@ssw0rd", accountRole: "admin", status: "active" },
+  { name: "Grace Manlangit", role: "Records Supervisor", dept: "Medical Records", username: "g.manlangit", password: "p@ssw0rd", accountRole: "user", status: "active" },
+  { name: "Angel Fortuno", role: "IT Support", dept: "IT", username: "a.fortuno", password: "p@ssw0rd", accountRole: "admin", status: "active" },
+  { name: "Rhea Villamor", role: "Finance Officer", dept: "Accounting & Finance", username: "r.villamor", password: "p@ssw0rd", accountRole: "user", status: "active" },
+  { name: "Bong Sarmiento", role: "GSS Coordinator", dept: "GSS", username: "b.sarmiento", password: "p@ssw0rd", accountRole: "user", status: "inactive" }
 ];
 
 // Live-synced from Firebase. Populated by watchUsers() below; do not
@@ -881,6 +881,8 @@ function openAddUserModal(){
       <label class="field"><span>Full name</span><input type="text" name="name" required placeholder="e.g. Juan Dela Cruz"></label>
       <label class="field"><span>Role</span><input type="text" name="role" placeholder="e.g. Records Clerk"></label>
       <label class="field"><span>Department</span><input type="text" name="dept" placeholder="e.g. Medical Records"></label>
+      <label class="field"><span>Username</span><input type="text" name="username" required placeholder="e.g. j.delacruz" autocomplete="off"></label>
+      <label class="field"><span>Password</span><input type="text" name="password" required placeholder="e.g. p@ssw0rd" autocomplete="off"></label>
       <label class="field">
         <span>Account role</span>
         <select name="accountRole">
@@ -908,6 +910,8 @@ function openEditUserModal(id){
       <label class="field"><span>Full name</span><input type="text" name="name" required value="${user.name}"></label>
       <label class="field"><span>Role</span><input type="text" name="role" value="${user.role}" placeholder="e.g. Records Clerk"></label>
       <label class="field"><span>Department</span><input type="text" name="dept" value="${user.dept}" placeholder="e.g. Medical Records"></label>
+      <label class="field"><span>Username</span><input type="text" name="username" required value="${user.username || ""}" autocomplete="off"></label>
+      <label class="field"><span>Password</span><input type="text" name="password" value="${user.password || ""}" placeholder="e.g. p@ssw0rd" autocomplete="off"></label>
       <label class="field">
         <span>Account role</span>
         <select name="accountRole">
@@ -1184,11 +1188,15 @@ function setupModal(){
     if(form.id === "addUserForm"){
       const fd = new FormData(form);
       const name = fd.get("name").trim();
-      if(!name) return;
+      const username = fd.get("username").trim();
+      const password = fd.get("password");
+      if(!name || !username || !password) return;
       set(push(usersRef), {
         name,
         role: fd.get("role").trim() || "Staff",
         dept: fd.get("dept").trim() || "—",
+        username,
+        password,
         accountRole: fd.get("accountRole") === "admin" ? "admin" : "user",
         status: "active",
         createdAt: Date.now()
@@ -1209,11 +1217,14 @@ function setupModal(){
       if(!user) return;
       const fd = new FormData(form);
       const name = fd.get("name").trim();
-      if(!name) return;
+      const username = fd.get("username").trim();
+      if(!name || !username) return;
       const updates = {
         name,
         role: fd.get("role").trim() || "Staff",
         dept: fd.get("dept").trim() || "—",
+        username,
+        password: fd.get("password") || user.password || "",
         accountRole: fd.get("accountRole") === "admin" ? "admin" : "user",
         status: fd.get("status") === "inactive" ? "inactive" : "active"
       };
