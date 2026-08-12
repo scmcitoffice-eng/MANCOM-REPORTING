@@ -503,6 +503,8 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
 .badge-ongoing{background:var(--badge-ongoing-bg);color:var(--badge-ongoing-fg);}
 .badge-started{background:var(--badge-started-bg);color:var(--badge-started-fg);}
 .badge-upcoming{background:var(--badge-upcoming-bg);color:var(--badge-upcoming-fg);}
+.badge-role-admin{background:var(--tag-af-bg);color:var(--tag-af-fg);}
+.badge-role-user{background:var(--tag-qa-bg);color:var(--tag-qa-fg);}
 
 .view-full-btn{
   width:100%;

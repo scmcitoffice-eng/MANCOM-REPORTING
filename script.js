@@ -276,11 +276,11 @@ const documents = [
 ];
 
 const users = [
-  { name: "Lito Cabajar", role: "IT Officer", dept: "IT", status: "active" },
-  { name: "Grace Manlangit", role: "Records Supervisor", dept: "Medical Records", status: "active" },
-  { name: "Angel Fortuno", role: "IT Support", dept: "IT", status: "active" },
-  { name: "Rhea Villamor", role: "Finance Officer", dept: "Accounting & Finance", status: "active" },
-  { name: "Bong Sarmiento", role: "GSS Coordinator", dept: "GSS", status: "inactive" }
+  { name: "Lito Cabajar", role: "IT Officer", dept: "IT", accountRole: "admin", status: "active" },
+  { name: "Grace Manlangit", role: "Records Supervisor", dept: "Medical Records", accountRole: "user", status: "active" },
+  { name: "Angel Fortuno", role: "IT Support", dept: "IT", accountRole: "admin", status: "active" },
+  { name: "Rhea Villamor", role: "Finance Officer", dept: "Accounting & Finance", accountRole: "user", status: "active" },
+  { name: "Bong Sarmiento", role: "GSS Coordinator", dept: "GSS", accountRole: "user", status: "inactive" }
 ];
 
 // ---------- RENDER DEPARTMENTS ----------
@@ -459,6 +459,12 @@ function badge(status){
   return `<span class="badge ${m.cls}">${m.label}</span>`;
 }
 
+// ---------- ACCOUNT ROLE HELPER ----------
+function roleBadge(accountRole){
+  const isAdmin = accountRole === "admin";
+  return `<span class="badge ${isAdmin ? "badge-role-admin" : "badge-role-user"}">${isAdmin ? "Admin" : "User"}</span>`;
+}
+
 // ---------- RENDER REPORTING ----------
 let currentReportFilter = null;
 function renderReporting(filterDept){
@@ -632,8 +638,12 @@ function renderUsers(){
       <td class="cell-main">${u.name}</td>
       <td>${u.role}</td>
       <td>${u.dept}</td>
+      <td>${roleBadge(u.accountRole)}</td>
       <td>${badge(u.status)}</td>
-      <td class="cell-action"><button class="link-btn" data-user-toggle="${i}">${u.status === "active" ? "Deactivate" : "Activate"}</button></td>
+      <td class="cell-action">
+        <button class="link-btn" data-user-edit="${i}">Edit</button>
+        <button class="link-btn" data-user-toggle="${i}">${u.status === "active" ? "Deactivate" : "Activate"}</button>
+      </td>
     </tr>
   `).join("");
 }
@@ -835,9 +845,50 @@ function openAddUserModal(){
       <label class="field"><span>Full name</span><input type="text" name="name" required placeholder="e.g. Juan Dela Cruz"></label>
       <label class="field"><span>Role</span><input type="text" name="role" placeholder="e.g. Records Clerk"></label>
       <label class="field"><span>Department</span><input type="text" name="dept" placeholder="e.g. Medical Records"></label>
+      <label class="field">
+        <span>Account role</span>
+        <select name="accountRole">
+          <option value="user" selected>User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </label>
       <div class="modal-actions">
         <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
         <button type="submit" class="primary-btn">Add User</button>
+      </div>
+    </form>
+  `);
+}
+
+function openEditUserModal(idx){
+  const user = users[idx];
+  if(!user) return;
+  openModal(`
+    <div class="modal-head">
+      <h3>Edit User</h3>
+      <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    </div>
+    <form id="editUserForm" class="modal-form" data-user-index="${idx}">
+      <label class="field"><span>Full name</span><input type="text" name="name" required value="${user.name}"></label>
+      <label class="field"><span>Role</span><input type="text" name="role" value="${user.role}" placeholder="e.g. Records Clerk"></label>
+      <label class="field"><span>Department</span><input type="text" name="dept" value="${user.dept}" placeholder="e.g. Medical Records"></label>
+      <label class="field">
+        <span>Account role</span>
+        <select name="accountRole">
+          <option value="user" ${user.accountRole === "user" ? "selected" : ""}>User</option>
+          <option value="admin" ${user.accountRole === "admin" ? "selected" : ""}>Admin</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Status</span>
+        <select name="status">
+          <option value="active" ${user.status === "active" ? "selected" : ""}>Active</option>
+          <option value="inactive" ${user.status === "inactive" ? "selected" : ""}>Inactive</option>
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-modal-close>Cancel</button>
+        <button type="submit" class="primary-btn">Save Changes</button>
       </div>
     </form>
   `);
@@ -1102,11 +1153,29 @@ function setupModal(){
         name,
         role: fd.get("role").trim() || "Staff",
         dept: fd.get("dept").trim() || "—",
+        accountRole: fd.get("accountRole") === "admin" ? "admin" : "user",
         status: "active"
       });
       renderUsers();
       closeModal();
       showToast(`${name} added`);
+    }
+
+    if(form.id === "editUserForm"){
+      const idx = Number(form.dataset.userIndex);
+      const user = users[idx];
+      if(!user) return;
+      const fd = new FormData(form);
+      const name = fd.get("name").trim();
+      if(!name) return;
+      user.name = name;
+      user.role = fd.get("role").trim() || "Staff";
+      user.dept = fd.get("dept").trim() || "—";
+      user.accountRole = fd.get("accountRole") === "admin" ? "admin" : "user";
+      user.status = fd.get("status") === "inactive" ? "inactive" : "active";
+      renderUsers();
+      closeModal();
+      showToast(`${name} updated`);
     }
   });
 }
@@ -1180,6 +1249,11 @@ function setupGssList(){
 // ---------- USERS TOGGLE ----------
 function setupUsersTable(){
   document.getElementById("usersTableBody").addEventListener("click", e => {
+    const editBtn = e.target.closest("[data-user-edit]");
+    if(editBtn){
+      openEditUserModal(Number(editBtn.dataset.userEdit));
+      return;
+    }
     const btn = e.target.closest("[data-user-toggle]");
     if(!btn) return;
     const idx = Number(btn.dataset.userToggle);
