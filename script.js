@@ -182,6 +182,7 @@ function watchReports(){
       .map(([id, data]) => ({ id, ...data }))
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     renderReporting(currentReportFilter);
+    renderReportSummary();
   }, err => {
     console.error("Failed to load reports from Realtime Database:", err);
     showToast(`Couldn't load reports: ${err.message || err.code || err}`);
@@ -320,6 +321,52 @@ function renderSchedule(){
       </div>
     </li>
   `).join("");
+}
+
+// ---------- RENDER REPORT SUMMARY ----------
+function renderReportSummary(){
+  const statsEl = document.getElementById("reportSummaryStats");
+  const listEl = document.getElementById("reportSummaryList");
+  if(!statsEl || !listEl) return;
+
+  const counts = { overdue: 0, pending: 0, submitted: 0 };
+  reports.forEach(r => {
+    if(counts[r.status] !== undefined) counts[r.status]++;
+  });
+
+  statsEl.innerHTML = `
+    <div class="rs-stat rs-overdue">
+      <span class="rs-count">${counts.overdue}</span>
+      <span class="rs-label">Overdue</span>
+    </div>
+    <div class="rs-stat rs-pending">
+      <span class="rs-count">${counts.pending}</span>
+      <span class="rs-label">Pending</span>
+    </div>
+    <div class="rs-stat rs-submitted">
+      <span class="rs-count">${counts.submitted}</span>
+      <span class="rs-label">Submitted</span>
+    </div>
+  `;
+
+  const statusRank = { overdue: 0, pending: 1, submitted: 2 };
+  const upcoming = [...reports]
+    .filter(r => r.status !== "submitted")
+    .sort((a, b) => (statusRank[a.status] ?? 3) - (statusRank[b.status] ?? 3))
+    .slice(0, 4);
+
+  listEl.innerHTML = upcoming.map(r => `
+    <li class="timeline-item ${r.status === 'pending' ? 'upcoming' : ''}">
+      <div class="t-time">Due ${r.due}</div>
+      <div class="t-row">
+        <div>
+          <div class="t-title">${r.name}</div>
+          <div class="t-desc"><span class="dept-tag ${r.tagClass}">${r.dept}</span></div>
+        </div>
+        ${badge(r.status)}
+      </div>
+    </li>
+  `).join("") || `<li class="empty-row" style="border-left:2px solid transparent;">All reports are submitted.</li>`;
 }
 
 // ---------- STATUS HELPERS ----------
@@ -1115,7 +1162,7 @@ function setupSettings(){
 // ---------- MISC BUTTONS ----------
 function setupMisc(){
   document.getElementById("bellBtn").addEventListener("click", () => showToast("No new notifications"));
-  document.getElementById("viewFullSchedule").addEventListener("click", () => switchView("schedule"));
+  document.getElementById("viewAllReports").addEventListener("click", () => switchView("reporting"));
   document.getElementById("logoutBtn").addEventListener("click", () => showToast("Logging out…"));
 }
 
@@ -1132,7 +1179,6 @@ function setGreeting(){
 
 document.addEventListener("DOMContentLoaded", async () => {
   renderDepartments();
-  renderSchedule();
   animateCounters();
   setGreeting();
   setupNav();
@@ -1150,6 +1196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupModal();
 
   renderReporting(currentReportFilter);
+  renderReportSummary();
   try {
     await seedReportsIfEmpty();
   } catch(err) {

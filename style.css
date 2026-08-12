@@ -448,6 +448,41 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
 }
 .view-full-btn:hover{background:#d6ecdf;}
 
+/* ---------- REPORT SUMMARY ---------- */
+.report-summary-stats{
+  display:flex;
+  gap:8px;
+  margin-bottom:16px;
+}
+.rs-stat{
+  flex:1;
+  text-align:center;
+  padding:10px 4px;
+  border-radius:10px;
+  background:var(--bg-soft, #f5f6f8);
+}
+.rs-count{
+  display:block;
+  font-size:19px;
+  font-weight:800;
+  color:var(--ink-900);
+  line-height:1.3;
+}
+.rs-label{
+  display:block;
+  font-size:10.5px;
+  font-weight:700;
+  color:var(--ink-500);
+  margin-top:1px;
+}
+.rs-stat.rs-overdue{background:var(--badge-overdue-bg, #fbe1de);}
+.rs-stat.rs-overdue .rs-count{color:var(--badge-overdue-fg, #c1493c);}
+.rs-stat.rs-pending{background:var(--badge-upcoming-bg);}
+.rs-stat.rs-pending .rs-count{color:var(--badge-upcoming-fg);}
+.rs-stat.rs-submitted{background:var(--badge-ongoing-bg);}
+.rs-stat.rs-submitted .rs-count{color:var(--badge-ongoing-fg);}
+.timeline .t-desc .dept-tag{margin-top:4px;display:inline-block;}
+
 /* ---------- VIEWS ---------- */
 .view{display:none;}
 .view.active{display:block;}
