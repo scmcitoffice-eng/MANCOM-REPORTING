@@ -168,6 +168,15 @@
   color:var(--ink-300);
 }
 
+.login-foot a{
+  color:var(--ink-500);
+  text-decoration:underline;
+}
+
+.login-foot a:hover{
+  color:var(--green-700);
+}
+
 @media (max-width:420px){
   .login-card{padding:26px 20px 20px;}
 }

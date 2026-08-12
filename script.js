@@ -878,7 +878,7 @@ function renderUsers(){
       <td>${u.role}</td>
       <td>${u.dept}</td>
       <td>${roleBadge(u.accountRole)}</td>
-      <td>${badge(u.status)}</td>
+      <td>${badge(u.status)}${u.mustChangePassword ? ` <span class="badge badge-upcoming">Pending setup</span>` : ""}</td>
       <td class="cell-action">
         <button class="link-btn" data-user-edit="${u.id}">Edit</button>
         <button class="link-btn" data-user-toggle="${u.id}">${u.status === "active" ? "Deactivate" : "Activate"}</button>
@@ -1514,11 +1514,12 @@ function setupModal(){
         password,
         accountRole: fd.get("accountRole") === "admin" ? "admin" : "user",
         status: "active",
+        mustChangePassword: true,
         createdAt: Date.now()
       })
         .then(() => {
           closeModal();
-          showToast(`${name} added`);
+          showToast(`${name} added — they'll be asked to set a new password on first login`);
         })
         .catch(err => {
           console.error("Failed to add user:", err);
@@ -1534,19 +1535,25 @@ function setupModal(){
       const name = fd.get("name").trim();
       const username = fd.get("username").trim();
       if(!name || !username) return;
+      const enteredPassword = fd.get("password");
+      // If an admin sets a new password here, treat it like a temporary
+      // password: the user must change it on their next login. Leaving the
+      // field as-is (unchanged) doesn't touch the existing flag.
+      const passwordChanged = enteredPassword && enteredPassword !== user.password;
       const updates = {
         name,
         role: fd.get("role").trim() || "Staff",
         dept: fd.get("dept").trim() || "—",
         username,
-        password: fd.get("password") || user.password || "",
+        password: enteredPassword || user.password || "",
         accountRole: fd.get("accountRole") === "admin" ? "admin" : "user",
-        status: fd.get("status") === "inactive" ? "inactive" : "active"
+        status: fd.get("status") === "inactive" ? "inactive" : "active",
+        mustChangePassword: passwordChanged ? true : (user.mustChangePassword || false)
       };
       update(child(usersRef, user.id), updates)
         .then(() => {
           closeModal();
-          showToast(`${name} updated`);
+          showToast(passwordChanged ? `${name} updated — they'll be asked to set a new password on next login` : `${name} updated`);
         })
         .catch(err => {
           console.error("Failed to update user:", err);

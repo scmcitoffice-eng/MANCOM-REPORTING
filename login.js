@@ -89,6 +89,15 @@ form.addEventListener("submit", async (e) => {
       return;
     }
 
+    if (user.mustChangePassword) {
+      // Don't grant a full session yet — stash just enough to get to the
+      // change-password step, which will re-verify against Firebase before
+      // ever setting scmc_auth.
+      sessionStorage.setItem("scmc_pending_change_id", id);
+      window.location.replace("change-password.html");
+      return;
+    }
+
     sessionStorage.setItem("scmc_auth", "1");
     sessionStorage.setItem("scmc_user", user.username);
     sessionStorage.setItem("scmc_current_user", JSON.stringify({
