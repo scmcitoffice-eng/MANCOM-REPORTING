@@ -81,6 +81,7 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
   margin-bottom:14px;
 }
 .brand-mark{flex:0 0 auto;}
+.brand-mark img{width:38px;height:auto;display:block;}
 .brand-text{display:flex;flex-direction:column;line-height:1.15;}
 .brand-name{
   font-weight:800;
