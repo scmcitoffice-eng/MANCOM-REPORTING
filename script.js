@@ -6,11 +6,13 @@ import {
 
 const reportsRef = ref(db, "reports");
 const meetingsRef = ref(db, "meetings");
+const usersRef = ref(db, "users");
 // Flags that record whether the one-time seed has already run, so that
-// deleting every report/meeting doesn't make the app think the collection
+// deleting every report/meeting/user doesn't make the app think the collection
 // was "never seeded" and write the seed data back in on the next reload.
 const reportsSeededRef = ref(db, "_meta/reportsSeeded");
 const meetingsSeededRef = ref(db, "_meta/meetingsSeeded");
+const usersSeededRef = ref(db, "_meta/usersSeeded");
 
 // ---------- DATA ----------
 const departments = [
@@ -237,6 +239,48 @@ function watchMeetings(){
   });
 }
 
+// One-time seed data — only written the very first time the app runs
+// against a Firebase project (tracked via the usersSeededRef flag).
+// After that, Firebase is the single source of truth and this array is
+// unused, even if every user is later removed.
+const seedUsers = [
+  { name: "Lito Cabajar", role: "IT Officer", dept: "IT", accountRole: "admin", status: "active" },
+  { name: "Grace Manlangit", role: "Records Supervisor", dept: "Medical Records", accountRole: "user", status: "active" },
+  { name: "Angel Fortuno", role: "IT Support", dept: "IT", accountRole: "admin", status: "active" },
+  { name: "Rhea Villamor", role: "Finance Officer", dept: "Accounting & Finance", accountRole: "user", status: "active" },
+  { name: "Bong Sarmiento", role: "GSS Coordinator", dept: "GSS", accountRole: "user", status: "inactive" }
+];
+
+// Live-synced from Firebase. Populated by watchUsers() below; do not
+// push/splice this directly — write to Firebase and let the listener update it.
+let users = [];
+
+async function seedUsersIfEmpty(){
+  const seededSnap = await get(usersSeededRef);
+  if(seededSnap.exists()) return;
+  const updates = {};
+  seedUsers.forEach((u, i) => {
+    const newKey = push(usersRef).key;
+    // Stagger createdAt so the original seed order is preserved once sorted.
+    updates[newKey] = { ...u, createdAt: Date.now() - (seedUsers.length - i) };
+  });
+  await update(usersRef, updates);
+  await set(usersSeededRef, true);
+}
+
+function watchUsers(){
+  onValue(usersRef, snap => {
+    const val = snap.val() || {};
+    users = Object.entries(val)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    renderUsers();
+  }, err => {
+    console.error("Failed to load users from Realtime Database:", err);
+    showToast(`Couldn't load users: ${err.message || err.code || err}`);
+  });
+}
+
 const records = [
   { chart: "CR-10432", patient: "R. Domingo", request: "Discharge summary copy", requested: "Jul 21, 2026", status: "processing" },
   { chart: "CR-10388", patient: "M. Villareal", request: "Full chart retrieval", requested: "Jul 20, 2026", status: "ready" },
@@ -273,14 +317,6 @@ const documents = [
   { name: "Costing_Sheet_Q3.xlsx", dept: "Accounting & Finance", uploaded: "Jul 19, 2026", size: "2.1 MB" },
   { name: "Chart_Room_Layout.pdf", dept: "Medical Records", uploaded: "Jul 12, 2026", size: "890 KB" },
   { name: "OPD_Signage_Plan.pdf", dept: "OPD", uploaded: "Jul 9, 2026", size: "1.6 MB" }
-];
-
-const users = [
-  { name: "Lito Cabajar", role: "IT Officer", dept: "IT", accountRole: "admin", status: "active" },
-  { name: "Grace Manlangit", role: "Records Supervisor", dept: "Medical Records", accountRole: "user", status: "active" },
-  { name: "Angel Fortuno", role: "IT Support", dept: "IT", accountRole: "admin", status: "active" },
-  { name: "Rhea Villamor", role: "Finance Officer", dept: "Accounting & Finance", accountRole: "user", status: "active" },
-  { name: "Bong Sarmiento", role: "GSS Coordinator", dept: "GSS", accountRole: "user", status: "inactive" }
 ];
 
 // ---------- RENDER DEPARTMENTS ----------
@@ -633,7 +669,7 @@ function renderDocuments(){
 // ---------- RENDER USERS ----------
 function renderUsers(){
   const body = document.getElementById("usersTableBody");
-  body.innerHTML = users.map((u, i) => `
+  body.innerHTML = users.map(u => `
     <tr>
       <td class="cell-main">${u.name}</td>
       <td>${u.role}</td>
@@ -641,8 +677,8 @@ function renderUsers(){
       <td>${roleBadge(u.accountRole)}</td>
       <td>${badge(u.status)}</td>
       <td class="cell-action">
-        <button class="link-btn" data-user-edit="${i}">Edit</button>
-        <button class="link-btn" data-user-toggle="${i}">${u.status === "active" ? "Deactivate" : "Activate"}</button>
+        <button class="link-btn" data-user-edit="${u.id}">Edit</button>
+        <button class="link-btn" data-user-toggle="${u.id}">${u.status === "active" ? "Deactivate" : "Activate"}</button>
       </td>
     </tr>
   `).join("");
@@ -860,15 +896,15 @@ function openAddUserModal(){
   `);
 }
 
-function openEditUserModal(idx){
-  const user = users[idx];
+function openEditUserModal(id){
+  const user = users.find(u => u.id === id);
   if(!user) return;
   openModal(`
     <div class="modal-head">
       <h3>Edit User</h3>
       <button type="button" class="modal-close" data-modal-close aria-label="Close">&times;</button>
     </div>
-    <form id="editUserForm" class="modal-form" data-user-index="${idx}">
+    <form id="editUserForm" class="modal-form" data-user-id="${user.id}">
       <label class="field"><span>Full name</span><input type="text" name="name" required value="${user.name}"></label>
       <label class="field"><span>Role</span><input type="text" name="role" value="${user.role}" placeholder="e.g. Records Clerk"></label>
       <label class="field"><span>Department</span><input type="text" name="dept" value="${user.dept}" placeholder="e.g. Medical Records"></label>
@@ -1149,33 +1185,47 @@ function setupModal(){
       const fd = new FormData(form);
       const name = fd.get("name").trim();
       if(!name) return;
-      users.unshift({
+      set(push(usersRef), {
         name,
         role: fd.get("role").trim() || "Staff",
         dept: fd.get("dept").trim() || "—",
         accountRole: fd.get("accountRole") === "admin" ? "admin" : "user",
-        status: "active"
-      });
-      renderUsers();
-      closeModal();
-      showToast(`${name} added`);
+        status: "active",
+        createdAt: Date.now()
+      })
+        .then(() => {
+          closeModal();
+          showToast(`${name} added`);
+        })
+        .catch(err => {
+          console.error("Failed to add user:", err);
+          showToast(`Couldn't add user: ${err.message || err.code || err}`);
+        });
     }
 
     if(form.id === "editUserForm"){
-      const idx = Number(form.dataset.userIndex);
-      const user = users[idx];
+      const id = form.dataset.userId;
+      const user = users.find(u => u.id === id);
       if(!user) return;
       const fd = new FormData(form);
       const name = fd.get("name").trim();
       if(!name) return;
-      user.name = name;
-      user.role = fd.get("role").trim() || "Staff";
-      user.dept = fd.get("dept").trim() || "—";
-      user.accountRole = fd.get("accountRole") === "admin" ? "admin" : "user";
-      user.status = fd.get("status") === "inactive" ? "inactive" : "active";
-      renderUsers();
-      closeModal();
-      showToast(`${name} updated`);
+      const updates = {
+        name,
+        role: fd.get("role").trim() || "Staff",
+        dept: fd.get("dept").trim() || "—",
+        accountRole: fd.get("accountRole") === "admin" ? "admin" : "user",
+        status: fd.get("status") === "inactive" ? "inactive" : "active"
+      };
+      update(child(usersRef, user.id), updates)
+        .then(() => {
+          closeModal();
+          showToast(`${name} updated`);
+        })
+        .catch(err => {
+          console.error("Failed to update user:", err);
+          showToast(`Couldn't save changes: ${err.message || err.code || err}`);
+        });
     }
   });
 }
@@ -1251,15 +1301,21 @@ function setupUsersTable(){
   document.getElementById("usersTableBody").addEventListener("click", e => {
     const editBtn = e.target.closest("[data-user-edit]");
     if(editBtn){
-      openEditUserModal(Number(editBtn.dataset.userEdit));
+      openEditUserModal(editBtn.dataset.userEdit);
       return;
     }
     const btn = e.target.closest("[data-user-toggle]");
     if(!btn) return;
-    const idx = Number(btn.dataset.userToggle);
-    users[idx].status = users[idx].status === "active" ? "inactive" : "active";
-    renderUsers();
-    showToast(`${users[idx].name} is now ${users[idx].status}`);
+    const id = btn.dataset.userToggle;
+    const user = users.find(u => u.id === id);
+    if(!user) return;
+    const newStatus = user.status === "active" ? "inactive" : "active";
+    update(child(usersRef, id), { status: newStatus })
+      .then(() => showToast(`${user.name} is now ${newStatus}`))
+      .catch(err => {
+        console.error("Failed to update user status:", err);
+        showToast(`Couldn't update status: ${err.message || err.code || err}`);
+      });
   });
 }
 
@@ -1356,4 +1412,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     showToast(`Couldn't seed meetings: ${err.message || err.code || err}`);
   }
   watchMeetings();
+
+  try {
+    await seedUsersIfEmpty();
+  } catch(err) {
+    console.error("Failed to seed users:", err);
+    showToast(`Couldn't seed users: ${err.message || err.code || err}`);
+  }
+  watchUsers();
 });
