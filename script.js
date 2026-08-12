@@ -463,7 +463,10 @@ function renderReporting(filterDept){
       <td>${r.pointPerson || "—"}</td>
       <td class="cell-notes">${r.notes || "—"}</td>
       <td>${badge(r.status)}</td>
-      <td class="cell-action"><button class="link-btn" data-index="${r._index}" data-report="${r.name}">${r.status === "submitted" ? "View" : "Submit"}</button></td>
+      <td class="cell-action">
+        <button class="link-btn" data-action="view" data-index="${r._index}">View</button>
+        <button class="link-btn" data-action="edit" data-index="${r._index}">Edit</button>
+      </td>
     </tr>
   `).join("") || `<tr><td colspan="8" class="empty-row">No reports for this department.</td></tr>`;
 
@@ -1111,16 +1114,8 @@ function setupReportsTable(){
     const report = reports[idx];
     if(!report) return;
 
-    if(btn.textContent.trim() === "Submit"){
-      update(child(reportsRef, report.id), {
-        status: "submitted",
-        dateReported: todayShort()
-      })
-        .then(() => showToast(`Submitted "${report.name}"`))
-        .catch(err => {
-          console.error("Failed to submit report:", err);
-          showToast(`Couldn't submit report: ${err.message || err.code || err}`);
-        });
+    if(btn.dataset.action === "edit"){
+      openEditReportModal(idx);
     } else {
       openViewReportModal(idx);
     }

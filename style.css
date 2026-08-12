@@ -634,7 +634,8 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
 .data-table tbody tr:hover{background:#fafbfa;}
 .cell-main{font-weight:700;color:var(--ink-900);max-width:220px;}
 .cell-notes{max-width:240px;color:var(--ink-500);}
-.cell-action{text-align:right;}
+.cell-action{text-align:right;white-space:nowrap;}
+.cell-action .link-btn + .link-btn{margin-left:4px;}
 .empty-row{padding:24px;text-align:center;color:var(--ink-300);}
 .amt-pos{color:var(--green-600);font-weight:700;}
 .amt-neg{color:#c1493c;font-weight:700;}
