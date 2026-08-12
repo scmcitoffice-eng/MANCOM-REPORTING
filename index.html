@@ -137,10 +137,16 @@
           <h2>Reporting</h2>
           <p class="view-sub">Track and submit department reports.</p>
         </div>
-        <button class="primary-btn" data-action="Submit Report">
-          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
-          Submit Report
-        </button>
+        <div class="view-head-actions">
+          <button class="ghost-btn" id="exportReportsBtn">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Export to Excel
+          </button>
+          <button class="primary-btn" data-action="Submit Report">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+            Submit Report
+          </button>
+        </div>
       </div>
       <div class="filter-row" id="reportFilters"></div>
       <div class="table-card">
@@ -327,6 +333,7 @@
   <div class="modal" id="modal"></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module" src="firebase-init.js"></script>
 <script type="module" src="script.js"></script>
 </body>

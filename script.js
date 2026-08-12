@@ -488,6 +488,49 @@ function renderReporting(filterDept){
   filters.innerHTML = depts.map(d => `<button class="chip ${(!filterDept && d === "All") || d === filterDept ? "chip-active" : ""}" data-filter="${d}">${d}</button>`).join("");
 }
 
+// ---------- EXPORT REPORTS TO EXCEL ----------
+function exportReportsToExcel(){
+  if(!window.XLSX){
+    showToast("Export library failed to load. Check your connection and try again.");
+    return;
+  }
+  const rows = reports
+    .filter(r => !currentReportFilter || r.dept === currentReportFilter)
+    .map(r => ({
+      "Department": r.dept,
+      "Report": r.name,
+      "Due Date": r.due,
+      "Date Reported": r.dateReported || "",
+      "Point Person": r.pointPerson || "",
+      "Notes": r.notes || "",
+      "Status": (r.status || "").charAt(0).toUpperCase() + (r.status || "").slice(1)
+    }));
+
+  if(rows.length === 0){
+    showToast("No reports to export.");
+    return;
+  }
+
+  const sheet = window.XLSX.utils.json_to_sheet(rows);
+  sheet["!cols"] = [
+    { wch: 22 }, // Department
+    { wch: 36 }, // Report
+    { wch: 14 }, // Due Date
+    { wch: 16 }, // Date Reported
+    { wch: 20 }, // Point Person
+    { wch: 30 }, // Notes
+    { wch: 12 }  // Status
+  ];
+
+  const workbook = window.XLSX.utils.book_new();
+  window.XLSX.utils.book_append_sheet(workbook, sheet, "Reports");
+
+  const today = new Date().toISOString().slice(0, 10);
+  const deptLabel = currentReportFilter ? currentReportFilter.replace(/[^a-z0-9]+/gi, "-") : "All-Departments";
+  window.XLSX.writeFile(workbook, `Reports_${deptLabel}_${today}.xlsx`);
+  showToast(`Exported ${rows.length} report${rows.length === 1 ? "" : "s"} to Excel`);
+}
+
 // ---------- RENDER RECORDS ----------
 function renderRecords(query){
   const body = document.getElementById("recordsTableBody");
@@ -1195,6 +1238,7 @@ function setupSettings(){
 function setupMisc(){
   document.getElementById("bellBtn").addEventListener("click", () => showToast("No new notifications"));
   document.getElementById("viewAllReports").addEventListener("click", () => switchView("reporting"));
+  document.getElementById("exportReportsBtn").addEventListener("click", exportReportsToExcel);
   document.getElementById("logoutBtn").addEventListener("click", () => showToast("Logging out…"));
 }
 
