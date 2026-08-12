@@ -71,10 +71,19 @@
 
     <header class="topbar">
       <div class="search-spacer"></div>
-      <button class="bell" id="bellBtn" aria-label="Notifications">
-        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M18 8a6 6 0 0 0-12 0c0 5.5-2 7-2 7h16s-2-1.5-2-7"/><path d="M10.5 21a1.7 1.7 0 0 0 3 0"/></svg>
-        <span class="dot"></span>
-      </button>
+      <div class="bell-wrap">
+        <button class="bell" id="bellBtn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M18 8a6 6 0 0 0-12 0c0 5.5-2 7-2 7h16s-2-1.5-2-7"/><path d="M10.5 21a1.7 1.7 0 0 0 3 0"/></svg>
+          <span class="dot" id="bellDot"></span>
+        </button>
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-panel-head">
+            <span>Notifications</span>
+            <button type="button" class="notif-mark-all" id="markAllReadBtn">Mark all read</button>
+          </div>
+          <div class="notif-list" id="notifList"></div>
+        </div>
+      </div>
       <div class="user-chip">
         <div class="user-avatar">LC</div>
         <div class="user-meta">

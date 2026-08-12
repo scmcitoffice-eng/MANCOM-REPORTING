@@ -30,6 +30,154 @@ function applyCurrentUserToChrome(){
   const settingName = document.getElementById("settingName");
   if(settingName) settingName.value = currentUser.name;
 }
+// ---------- NOTIFICATIONS ----------
+// Bell notifications for: (1) a report being added (by anyone, since
+// reports sync live from Realtime Database), and (2) a meeting starting
+// within the next hour. State is kept in localStorage so read/unread
+// status and "already notified" bookkeeping survive a page reload.
+const NOTIF_STORAGE_KEY = "scmc_notifications";
+const SEEN_REPORTS_KEY = "scmc_seen_report_ids";
+const NOTIFIED_MEETINGS_KEY = "scmc_notified_meeting_ids";
+const MEETING_REMINDER_WINDOW_MS = 60 * 60 * 1000; // notify within 1hr of start
+const MEETING_REMINDER_GRACE_MS = 5 * 60 * 1000;   // don't notify for meetings that already started >5min ago
+
+function loadJson(key, fallback){
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch(err) {
+    console.error(`Failed to read ${key} from localStorage:`, err);
+    return fallback;
+  }
+}
+function loadIdSet(key){
+  return new Set(loadJson(key, []));
+}
+function saveIdSet(key, set){
+  try { localStorage.setItem(key, JSON.stringify([...set])); }
+  catch(err) { console.error(`Failed to save ${key} to localStorage:`, err); }
+}
+
+let notifications = loadJson(NOTIF_STORAGE_KEY, []);
+let seenReportIds = loadIdSet(SEEN_REPORTS_KEY);
+let notifiedMeetingIds = loadIdSet(NOTIFIED_MEETINGS_KEY);
+let reportsInitialized = false;
+
+function saveNotifications(){
+  notifications = notifications.slice(0, 50);
+  try { localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(notifications)); }
+  catch(err) { console.error("Failed to save notifications to localStorage:", err); }
+}
+
+function addNotification({ type, title, message }){
+  notifications.unshift({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    type, title, message,
+    time: Date.now(),
+    read: false
+  });
+  saveNotifications();
+  renderNotifications();
+}
+
+function timeAgo(ts){
+  const diffMin = Math.round(Math.max(0, Date.now() - ts) / 60000);
+  if(diffMin < 1) return "Just now";
+  if(diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if(diffHr < 24) return `${diffHr}h ago`;
+  return `${Math.round(diffHr / 24)}d ago`;
+}
+
+const notifIcons = {
+  report: `<svg viewBox="0 0 24 24" width="15" height="15"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`,
+  meeting: `<svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`
+};
+
+function renderNotifications(){
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const bellBtn = document.getElementById("bellBtn");
+  const dot = document.getElementById("bellDot");
+  if(bellBtn) bellBtn.classList.toggle("has-unread", unreadCount > 0);
+  if(dot) dot.style.display = unreadCount > 0 ? "block" : "none";
+
+  const list = document.getElementById("notifList");
+  if(!list) return;
+  list.innerHTML = notifications.length
+    ? notifications.map(n => `
+        <button type="button" class="notif-item ${n.read ? "" : "unread"}" data-notif-id="${n.id}">
+          <span class="notif-icon notif-icon-${n.type}">${notifIcons[n.type] || notifIcons.report}</span>
+          <span class="notif-body">
+            <span class="notif-title">${n.title}</span>
+            <span class="notif-message">${n.message}</span>
+            <span class="notif-time">${timeAgo(n.time)}</span>
+          </span>
+        </button>
+      `).join("")
+    : `<div class="notif-empty">No notifications yet</div>`;
+}
+
+function formatMeetingStart(ts){
+  return new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+// Scans meetings for any with a `startAt` timestamp that has just entered
+// the "starts within the hour" window and fires a one-time reminder.
+function checkMeetingReminders(){
+  const now = Date.now();
+  let changed = false;
+  meetings.forEach(m => {
+    if(!m.startAt || notifiedMeetingIds.has(m.id)) return;
+    const msUntilStart = m.startAt - now;
+    if(msUntilStart <= MEETING_REMINDER_WINDOW_MS && msUntilStart > -MEETING_REMINDER_GRACE_MS){
+      notifiedMeetingIds.add(m.id);
+      changed = true;
+      addNotification({
+        type: "meeting",
+        title: "Meeting starting soon",
+        message: `"${m.title}" starts at ${formatMeetingStart(m.startAt)}`
+      });
+      showToast(`Reminder: "${m.title}" starts in about an hour`);
+    }
+  });
+  if(changed) saveIdSet(NOTIFIED_MEETINGS_KEY, notifiedMeetingIds);
+}
+
+function setupNotifications(){
+  const bellBtn = document.getElementById("bellBtn");
+  const panel = document.getElementById("notifPanel");
+  const markAllBtn = document.getElementById("markAllReadBtn");
+  if(!bellBtn || !panel) return;
+
+  bellBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    panel.classList.toggle("show");
+  });
+
+  panel.addEventListener("click", e => {
+    e.stopPropagation();
+    const item = e.target.closest("[data-notif-id]");
+    if(!item) return;
+    const notif = notifications.find(n => n.id === item.dataset.notifId);
+    if(notif && !notif.read){
+      notif.read = true;
+      saveNotifications();
+      renderNotifications();
+    }
+  });
+
+  markAllBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    let changed = false;
+    notifications.forEach(n => { if(!n.read){ n.read = true; changed = true; } });
+    if(changed){ saveNotifications(); renderNotifications(); }
+  });
+
+  document.addEventListener("click", () => panel.classList.remove("show"));
+
+  renderNotifications();
+}
+
 // Flags that record whether the one-time seed has already run, so that
 // deleting every report/meeting/user doesn't make the app think the collection
 // was "never seeded" and write the seed data back in on the next reload.
@@ -213,6 +361,29 @@ function watchReports(){
     reports = Object.entries(val)
       .map(([id, data]) => ({ id, ...data }))
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    // Notify for reports that showed up after the dashboard's initial load
+    // (covers reports added by this user or synced in from anyone else).
+    if(reportsInitialized){
+      let changed = false;
+      reports.forEach(r => {
+        if(!seenReportIds.has(r.id)){
+          seenReportIds.add(r.id);
+          changed = true;
+          addNotification({
+            type: "report",
+            title: "New report added",
+            message: `${r.name} — ${r.dept}`
+          });
+        }
+      });
+      if(changed) saveIdSet(SEEN_REPORTS_KEY, seenReportIds);
+    } else {
+      reports.forEach(r => seenReportIds.add(r.id));
+      saveIdSet(SEEN_REPORTS_KEY, seenReportIds);
+      reportsInitialized = true;
+    }
+
     renderReporting(currentReportFilter);
     renderReportSummary();
     renderReportAnalytics();
@@ -256,6 +427,7 @@ function watchMeetings(){
       .map(([id, data]) => ({ id, ...data }))
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     renderMeetings();
+    checkMeetingReminders();
   }, err => {
     console.error("Failed to load meetings from Realtime Database:", err);
     showToast(`Couldn't load meetings: ${err.message || err.code || err}`);
@@ -663,6 +835,10 @@ function renderMeetings(){
         <h3>${m.title}</h3>
         <span class="meeting-time">${m.time}</span>
       </div>
+      ${m.startAt ? `<span class="meeting-reminder">
+          <svg viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          Reminder set for 1hr before · ${formatMeetingStart(m.startAt)}
+        </span>` : ""}
       <p class="meeting-attendees">${m.attendees}</p>
       <ul class="meeting-agenda">
         ${m.agenda.map(a => `<li>${a}</li>`).join("")}
@@ -833,6 +1009,13 @@ function formatFileSize(bytes){
 function todayShort(){
   return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
+// Formats an epoch-ms timestamp for a <input type="datetime-local"> value.
+function toDatetimeLocalValue(ts){
+  if(!ts) return "";
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function openNewMeetingModal(){
   openModal(`
@@ -843,6 +1026,10 @@ function openNewMeetingModal(){
     <form id="newMeetingForm" class="modal-form">
       <label class="field"><span>Meeting title</span><input type="text" name="title" required placeholder="e.g. IT / HIMS Sync"></label>
       <label class="field"><span>Time</span><input type="text" name="time" placeholder="e.g. Today · 4:30 PM"></label>
+      <label class="field">
+        <span>Starts at (for the 1-hour reminder)</span>
+        <input type="datetime-local" name="startAt">
+      </label>
       <label class="field"><span>Attendees</span><input type="text" name="attendees" placeholder="e.g. IT, GSS"></label>
       <label class="field"><span>Agenda items</span><textarea name="agenda" rows="4" placeholder="One item per line"></textarea></label>
       <div class="modal-actions">
@@ -864,6 +1051,10 @@ function openEditMeetingModal(idx){
     <form id="editMeetingForm" class="modal-form" data-meeting-index="${idx}">
       <label class="field"><span>Meeting title</span><input type="text" name="title" required value="${meeting.title}"></label>
       <label class="field"><span>Time</span><input type="text" name="time" value="${meeting.time}" placeholder="e.g. Today · 4:30 PM"></label>
+      <label class="field">
+        <span>Starts at (for the 1-hour reminder)</span>
+        <input type="datetime-local" name="startAt" value="${toDatetimeLocalValue(meeting.startAt)}">
+      </label>
       <label class="field"><span>Attendees</span><input type="text" name="attendees" value="${meeting.attendees}"></label>
       <label class="field"><span>Agenda items</span><textarea name="agenda" rows="4" placeholder="One item per line">${meeting.agenda.join("\n")}</textarea></label>
       <div class="modal-actions">
@@ -1123,12 +1314,21 @@ function setupModal(){
       const title = fd.get("title").trim();
       if(!title) return;
       const agenda = fd.get("agenda").split("\n").map(s => s.trim()).filter(Boolean);
+      const startAtRaw = fd.get("startAt");
+      const startAt = startAtRaw ? new Date(startAtRaw).getTime() : null;
       const updates = {
         title,
         time: fd.get("time").trim() || "Time TBD",
+        startAt,
         attendees: fd.get("attendees").trim() || "TBD",
         agenda: agenda.length ? agenda : ["No agenda items yet"]
       };
+      // If the start time changed, clear any prior "reminder already sent"
+      // flag so the new time can trigger its own 1-hour-before reminder.
+      if(meeting.startAt !== startAt && notifiedMeetingIds.has(meeting.id)){
+        notifiedMeetingIds.delete(meeting.id);
+        saveIdSet(NOTIFIED_MEETINGS_KEY, notifiedMeetingIds);
+      }
       update(child(meetingsRef, meeting.id), updates)
         .then(() => {
           closeModal();
@@ -1176,9 +1376,11 @@ function setupModal(){
       const title = fd.get("title").trim();
       if(!title) return;
       const agenda = fd.get("agenda").split("\n").map(s => s.trim()).filter(Boolean);
+      const startAtRaw = fd.get("startAt");
       set(push(meetingsRef), {
         title,
         time: fd.get("time").trim() || "Time TBD",
+        startAt: startAtRaw ? new Date(startAtRaw).getTime() : null,
         attendees: fd.get("attendees").trim() || "TBD",
         agenda: agenda.length ? agenda : ["No agenda items yet"],
         createdAt: Date.now()
@@ -1421,7 +1623,6 @@ function setupSettings(){
 
 // ---------- MISC BUTTONS ----------
 function setupMisc(){
-  document.getElementById("bellBtn").addEventListener("click", () => showToast("No new notifications"));
   document.getElementById("viewAllReports").addEventListener("click", () => switchView("reporting"));
   document.getElementById("exportReportsBtn").addEventListener("click", exportReportsToExcel);
   document.getElementById("logoutBtn").addEventListener("click", () => {
@@ -1450,6 +1651,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupDayTabs();
   setupSettings();
   setupMisc();
+  setupNotifications();
   setupModal();
 
   renderReporting(currentReportFilter);
@@ -1469,6 +1671,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     showToast(`Couldn't seed meetings: ${err.message || err.code || err}`);
   }
   watchMeetings();
+  // Re-scan meeting start times every minute so the "1 hour before" reminder
+  // fires even if no meeting data changes in the meantime.
+  setInterval(checkMeetingReminders, 60 * 1000);
 
   try {
     await seedUsersIfEmpty();
