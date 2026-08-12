@@ -1087,7 +1087,6 @@ function openNewMeetingModal(){
     </div>
     <form id="newMeetingForm" class="modal-form">
       <label class="field"><span>Meeting title</span><input type="text" name="title" required placeholder="e.g. IT / HIMS Sync"></label>
-      <label class="field"><span>Time</span><input type="text" name="time" placeholder="e.g. Today · 4:30 PM"></label>
       <label class="field">
         <span>Starts at (for the 1-hour reminder)</span>
         <input type="datetime-local" name="startAt">
@@ -1112,7 +1111,6 @@ function openEditMeetingModal(idx){
     </div>
     <form id="editMeetingForm" class="modal-form" data-meeting-index="${idx}">
       <label class="field"><span>Meeting title</span><input type="text" name="title" required value="${meeting.title}"></label>
-      <label class="field"><span>Time</span><input type="text" name="time" value="${meeting.time}" placeholder="e.g. Today · 4:30 PM"></label>
       <label class="field">
         <span>Starts at (for the 1-hour reminder)</span>
         <input type="datetime-local" name="startAt" value="${toDatetimeLocalValue(meeting.startAt)}">
@@ -1449,7 +1447,7 @@ function setupModal(){
       const startAt = startAtRaw ? new Date(startAtRaw).getTime() : null;
       const updates = {
         title,
-        time: fd.get("time").trim() || "Time TBD",
+        time: startAt ? formatMeetingStart(startAt) : "Time TBD",
         startAt,
         attendees: fd.get("attendees").trim() || "TBD",
         agenda: agenda.length ? agenda : ["No agenda items yet"]
@@ -1508,10 +1506,11 @@ function setupModal(){
       if(!title) return;
       const agenda = fd.get("agenda").split("\n").map(s => s.trim()).filter(Boolean);
       const startAtRaw = fd.get("startAt");
+      const startAt = startAtRaw ? new Date(startAtRaw).getTime() : null;
       set(push(meetingsRef), {
         title,
-        time: fd.get("time").trim() || "Time TBD",
-        startAt: startAtRaw ? new Date(startAtRaw).getTime() : null,
+        time: startAt ? formatMeetingStart(startAt) : "Time TBD",
+        startAt,
         attendees: fd.get("attendees").trim() || "TBD",
         agenda: agenda.length ? agenda : ["No agenda items yet"],
         createdAt: Date.now()
