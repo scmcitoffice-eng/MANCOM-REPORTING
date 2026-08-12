@@ -1239,7 +1239,12 @@ function setupMisc(){
   document.getElementById("bellBtn").addEventListener("click", () => showToast("No new notifications"));
   document.getElementById("viewAllReports").addEventListener("click", () => switchView("reporting"));
   document.getElementById("exportReportsBtn").addEventListener("click", exportReportsToExcel);
-  document.getElementById("logoutBtn").addEventListener("click", () => showToast("Logging out…"));
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    showToast("Logging out…");
+    sessionStorage.removeItem("scmc_auth");
+    sessionStorage.removeItem("scmc_user");
+    setTimeout(() => { window.location.replace("login.html"); }, 400);
+  });
 }
 
 // ---------- INIT ----------

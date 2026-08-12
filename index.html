@@ -6,6 +6,13 @@
 <title>St. Camillus Medical Center — Reporting Dashboard</title>
 <link rel="icon" type="image/png" href="logo-seal.png">
 <link rel="stylesheet" href="style.css">
+<script>
+  // Auth guard: bounce to the login page if this session hasn't signed in.
+  // Client-side only — see login.js for details on its limitations.
+  if (sessionStorage.getItem("scmc_auth") !== "1") {
+    window.location.replace("login.html");
+  }
+</script>
 </head>
 <body>
 
