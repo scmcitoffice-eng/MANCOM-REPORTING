@@ -708,6 +708,13 @@ function deptOptionsHtml(selected){
   ).join("");
 }
 
+// Only admins, or a user from the same department the report belongs to,
+// may edit or delete a report.
+function canManageReport(report){
+  if(!report) return false;
+  return currentUser.accountRole === "admin" || currentUser.dept === report.dept;
+}
+
 // ---------- RENDER REPORTING ----------
 let currentReportFilter = null;
 function renderReporting(filterDept){
@@ -727,7 +734,7 @@ function renderReporting(filterDept){
       <td>${badge(r.status)}</td>
       <td class="cell-action">
         <button class="link-btn" data-action="view" data-index="${r._index}">View</button>
-        <button class="link-btn" data-action="edit" data-index="${r._index}">Edit</button>
+        ${canManageReport(r) ? `<button class="link-btn" data-action="edit" data-index="${r._index}">Edit</button>` : ""}
       </td>
     </tr>
   `).join("") || `<tr><td colspan="8" class="empty-row">No reports for this department.</td></tr>`;
@@ -1249,6 +1256,7 @@ function openAddReportModal(presetDept){
 function openViewReportModal(idx){
   const report = reports[idx];
   if(!report) return;
+  const canManage = canManageReport(report);
   openModal(`
     <div class="modal-head">
       <h3>${report.name}</h3>
@@ -1264,8 +1272,8 @@ function openViewReportModal(idx){
       <label class="field"><span>Notes</span><div>${report.notes || "—"}</div></label>
       <label class="field"><span>Status</span><div>${badge(report.status)}</div></label>
       <div class="modal-actions">
-        <button type="button" class="ghost-btn" data-report-delete="${idx}">Delete</button>
-        <button type="button" class="ghost-btn" data-report-edit="${idx}">Edit</button>
+        ${canManage ? `<button type="button" class="ghost-btn" data-report-delete="${idx}">Delete</button>` : ""}
+        ${canManage ? `<button type="button" class="ghost-btn" data-report-edit="${idx}">Edit</button>` : ""}
         <button type="button" class="primary-btn" data-modal-close>Close</button>
       </div>
     </div>
@@ -1275,6 +1283,10 @@ function openViewReportModal(idx){
 function openEditReportModal(idx){
   const report = reports[idx];
   if(!report) return;
+  if(!canManageReport(report)){
+    showToast("Only an admin or someone from this report's department can edit it.");
+    return;
+  }
   const statusOptions = [
     { value: "pending", label: "Pending" },
     { value: "overdue", label: "Overdue" },
@@ -1314,7 +1326,12 @@ function setupModal(){
     if(deleteBtn){
       const idx = Number(deleteBtn.dataset.reportDelete);
       const report = reports[idx];
-      if(report && confirm(`Delete "${report.name}"? This can't be undone.`)){
+      if(!report) return;
+      if(!canManageReport(report)){
+        showToast("Only an admin or someone from this report's department can delete it.");
+        return;
+      }
+      if(confirm(`Delete "${report.name}"? This can't be undone.`)){
         remove(child(reportsRef, report.id))
           .then(() => {
             closeModal();
@@ -1391,6 +1408,11 @@ function setupModal(){
       const idx = Number(form.dataset.reportIndex);
       const report = reports[idx];
       if(!report) return;
+      if(!canManageReport(report)){
+        showToast("Only an admin or someone from this report's department can edit it.");
+        closeModal();
+        return;
+      }
       const fd = new FormData(form);
       const name = fd.get("name").trim();
       const due = fd.get("due").trim();
