@@ -864,6 +864,11 @@ function openViewReportModal(idx){
 function openEditReportModal(idx){
   const report = reports[idx];
   if(!report) return;
+  const statusOptions = [
+    { value: "pending", label: "Pending" },
+    { value: "overdue", label: "Overdue" },
+    { value: "submitted", label: "On Going" }
+  ];
   openModal(`
     <div class="modal-head">
       <h3>Edit Report</h3>
@@ -872,6 +877,12 @@ function openEditReportModal(idx){
     <form id="editReportForm" class="modal-form" data-report-index="${idx}">
       <label class="field"><span>Report name</span><input type="text" name="name" required value="${report.name}"></label>
       <label class="field"><span>Due date</span><input type="text" name="due" required value="${report.due}"></label>
+      <label class="field">
+        <span>Status</span>
+        <select name="status">
+          ${statusOptions.map(s => `<option value="${s.value}" ${s.value === report.status ? "selected" : ""}>${s.label}</option>`).join("")}
+        </select>
+      </label>
       <label class="field"><span>Date reported</span><input type="text" name="dateReported" value="${report.dateReported || ""}" placeholder="e.g. Jul 25, 2026"></label>
       <label class="field"><span>Point person</span><input type="text" name="pointPerson" value="${report.pointPerson || ""}"></label>
       <label class="field"><span>Notes</span><textarea name="notes" rows="3">${report.notes || ""}</textarea></label>
@@ -933,6 +944,7 @@ function setupModal(){
       const updates = {
         name,
         due,
+        status: fd.get("status"),
         dateReported: fd.get("dateReported").trim(),
         pointPerson: fd.get("pointPerson").trim(),
         notes: fd.get("notes").trim()
