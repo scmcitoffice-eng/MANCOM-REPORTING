@@ -5,7 +5,7 @@
 // scmc_auth — so a real session only begins once a new password is saved
 // here and verified against Firebase.
 
-import { db } from "./firebase-init.js";
+import { db, authReady } from "./firebase-init.js";
 import {
   ref, get, update
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
@@ -79,6 +79,7 @@ form.addEventListener("submit", async (e) => {
   setSubmitting(true);
 
   try {
+    await authReady;
     const userRef = ref(db, `users/${pendingId}`);
     const snap = await get(userRef);
     const user = snap.val();

@@ -1,5 +1,5 @@
 // ---------- FIREBASE ----------
-import { db } from "./firebase-init.js";
+import { db, authReady } from "./firebase-init.js";
 import {
   ref, onValue, push, set, update, remove, get, child
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
@@ -1851,6 +1851,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderReporting(currentReportFilter);
   renderReportSummary();
+
+  try {
+    await authReady;
+  } catch(err) {
+    console.error("Anonymous sign-in failed, dashboard cannot load live data:", err);
+    showToast("Couldn't connect to the database. Check your connection and reload.");
+    return;
+  }
+
   try {
     await seedReportsIfEmpty();
   } catch(err) {

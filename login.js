@@ -12,7 +12,7 @@
 // Authentication (email/password or similar) plus Realtime Database
 // security rules that require an authenticated request.
 
-import { db } from "./firebase-init.js";
+import { db, authReady } from "./firebase-init.js";
 import {
   ref, get
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
@@ -66,6 +66,7 @@ form.addEventListener("submit", async (e) => {
   setSubmitting(true);
 
   try {
+    await authReady;
     const snap = await get(usersRef);
     const usersVal = snap.val() || {};
     const entry = Object.entries(usersVal).find(([, u]) =>
