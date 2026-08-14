@@ -84,6 +84,18 @@ function addNotification({ type, title, message }){
   renderNotifications();
 }
 
+function clearNotification(id){
+  notifications = notifications.filter(n => n.id !== id);
+  saveNotifications();
+  renderNotifications();
+}
+
+function clearAllNotifications(){
+  notifications = [];
+  saveNotifications();
+  renderNotifications();
+}
+
 function timeAgo(ts){
   const diffMin = Math.round(Math.max(0, Date.now() - ts) / 60000);
   if(diffMin < 1) return "Just now";
@@ -109,14 +121,19 @@ function renderNotifications(){
   if(!list) return;
   list.innerHTML = notifications.length
     ? notifications.map(n => `
-        <button type="button" class="notif-item ${n.read ? "" : "unread"}" data-notif-id="${n.id}">
-          <span class="notif-icon notif-icon-${n.type}">${notifIcons[n.type] || notifIcons.report}</span>
-          <span class="notif-body">
-            <span class="notif-title">${n.title}</span>
-            <span class="notif-message">${n.message}</span>
-            <span class="notif-time">${timeAgo(n.time)}</span>
-          </span>
-        </button>
+        <div class="notif-item ${n.read ? "" : "unread"}" data-notif-id="${n.id}">
+          <button type="button" class="notif-item-main" data-notif-id="${n.id}">
+            <span class="notif-icon notif-icon-${n.type}">${notifIcons[n.type] || notifIcons.report}</span>
+            <span class="notif-body">
+              <span class="notif-title">${n.title}</span>
+              <span class="notif-message">${n.message}</span>
+              <span class="notif-time">${timeAgo(n.time)}</span>
+            </span>
+          </button>
+          <button type="button" class="notif-clear" data-clear-id="${n.id}" aria-label="Clear notification">
+            <svg viewBox="0 0 24 24" width="12" height="12"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
       `).join("")
     : `<div class="notif-empty">No notifications yet</div>`;
 }
@@ -160,6 +177,13 @@ function setupNotifications(){
 
   panel.addEventListener("click", e => {
     e.stopPropagation();
+
+    const clearBtn = e.target.closest("[data-clear-id]");
+    if(clearBtn){
+      clearNotification(clearBtn.dataset.clearId);
+      return;
+    }
+
     const item = e.target.closest("[data-notif-id]");
     if(!item) return;
     const notif = notifications.find(n => n.id === item.dataset.notifId);
@@ -176,6 +200,14 @@ function setupNotifications(){
     notifications.forEach(n => { if(!n.read){ n.read = true; changed = true; } });
     if(changed){ saveNotifications(); renderNotifications(); }
   });
+
+  const clearAllBtn = document.getElementById("clearAllNotifsBtn");
+  if(clearAllBtn){
+    clearAllBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      if(notifications.length) clearAllNotifications();
+    });
+  }
 
   document.addEventListener("click", () => panel.classList.remove("show"));
 
