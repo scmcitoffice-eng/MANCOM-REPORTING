@@ -298,6 +298,12 @@ const departments = [
     title: "Accounting & Finance",
     desc: "Costing review, Pricing Committee, Bullseye POS",
     icon: `<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9h18M8 13h3M8 17h8"/>`
+  },
+  {
+    tag: "ADMINISTRATIVE DEPARTMENT", tagClass: "tag-admin", iconClass: "admin",
+    title: "Administrative Department",
+    desc: "General administration, records coordination, executive support",
+    icon: `<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/>`
   }
 ];
 
