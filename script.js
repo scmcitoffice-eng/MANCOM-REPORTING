@@ -721,6 +721,13 @@ function canManageReport(report){
   return currentUser.accountRole === "admin" || currentUser.dept === report.dept;
 }
 
+// Only staff from IT or Administrative Department may edit or delete
+// scheduled meetings.
+const MEETING_MANAGER_DEPTS = ["IT", "Administrative Department"];
+function canManageMeetings(){
+  return MEETING_MANAGER_DEPTS.includes(currentUser.dept);
+}
+
 // ---------- RENDER REPORTING ----------
 let currentReportFilter = null;
 function renderReporting(filterDept){
@@ -868,10 +875,10 @@ function renderMeetings(){
       <ul class="meeting-agenda">
         ${m.agenda.map(a => `<li>${a}</li>`).join("")}
       </ul>
-      <div class="meeting-actions">
+      ${canManageMeetings() ? `<div class="meeting-actions">
         <button type="button" class="link-btn" data-meeting-edit="${i}">Edit</button>
         <button type="button" class="link-btn link-btn-danger" data-meeting-delete="${i}">Delete</button>
-      </div>
+      </div>` : ""}
     </article>
   `).join("");
 }
@@ -1110,6 +1117,10 @@ function openNewMeetingModal(){
 function openEditMeetingModal(idx){
   const meeting = meetings[idx];
   if(!meeting) return;
+  if(!canManageMeetings()){
+    showToast("Only IT and Administrative Department staff can edit meetings.");
+    return;
+  }
   openModal(`
     <div class="modal-head">
       <h3>Edit Meeting</h3>
@@ -1445,6 +1456,11 @@ function setupModal(){
       const idx = Number(form.dataset.meetingIndex);
       const meeting = meetings[idx];
       if(!meeting) return;
+      if(!canManageMeetings()){
+        closeModal();
+        showToast("Only IT and Administrative Department staff can edit meetings.");
+        return;
+      }
       const fd = new FormData(form);
       const title = fd.get("title").trim();
       if(!title) return;
@@ -1729,6 +1745,10 @@ function setupMeetingsGrid(){
     }
     const deleteBtn = e.target.closest("[data-meeting-delete]");
     if(deleteBtn){
+      if(!canManageMeetings()){
+        showToast("Only IT and Administrative Department staff can delete meetings.");
+        return;
+      }
       const idx = Number(deleteBtn.dataset.meetingDelete);
       const meeting = meetings[idx];
       if(meeting && confirm(`Delete "${meeting.title}"? This can't be undone.`)){
