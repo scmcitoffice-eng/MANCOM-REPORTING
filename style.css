@@ -204,6 +204,27 @@ svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-l
 .user-role{font-size:11.5px;color:var(--ink-500);}
 .chev{color:var(--ink-500);}
 
+.topbar-user{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:5px 8px 5px 5px;
+  border-radius:30px;
+}
+.topbar-user:hover{background:#eef1ef;}
+.topbar-user .logout{
+  margin-top:0;
+  margin-left:4px;
+  padding:6px 10px;
+  border-radius:20px;
+  border:1px solid var(--line);
+  background:#fff;
+}
+.topbar-user .logout:hover{
+  text-decoration:none;
+  background:var(--green-100);
+}
+
 /* ---------- HERO ---------- */
 .hero{
   position:relative;
